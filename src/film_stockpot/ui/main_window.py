@@ -38,6 +38,7 @@ from film_stockpot.ui.icons import load_icon
 from film_stockpot.ui.widgets.busy_overlay import BusyOverlay
 from film_stockpot.ui.widgets.export_panel import FORMAT_TIFF_16BIT, ExportPanel
 from film_stockpot.ui.widgets.film_strip import FilmStripPanel
+from film_stockpot.ui.widgets.histogram import HistogramWidget
 from film_stockpot.ui.widgets.image_viewer import ImageViewer
 from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
 from film_stockpot.ui.workers import ApplyPresetWorker, BatchExportWorker
@@ -166,6 +167,15 @@ class MainWindow(QMainWindow):
         tabs.addTab(scroll, "Adjustment")
         tabs.addTab(self._export_panel, "Export")
 
+        self._histogram = HistogramWidget(self)
+
+        panel_container = QWidget(self)
+        panel_layout = QVBoxLayout(panel_container)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.setSpacing(0)
+        panel_layout.addWidget(self._histogram)
+        panel_layout.addWidget(tabs, 1)
+
         dock = QDockWidget("Panel", self)
         dock.setObjectName("panel_dock")
         dock.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea | Qt.DockWidgetArea.LeftDockWidgetArea)
@@ -173,7 +183,7 @@ class MainWindow(QMainWindow):
             QDockWidget.DockWidgetFeature.DockWidgetMovable
             | QDockWidget.DockWidgetFeature.DockWidgetFloatable
         )
-        dock.setWidget(tabs)
+        dock.setWidget(panel_container)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
 
         self._combo.currentIndexChanged.connect(self._schedule_preset_apply)
@@ -458,9 +468,11 @@ class MainWindow(QMainWindow):
 
     def _update_live(self) -> None:
         if self._preview_base is None:
+            self._histogram.clear()
             return
         adjusted = apply_scanner_adjustments(self._preview_base, self._panel.settings())
         self._viewer.set_image(array_to_qimage(adjusted))
+        self._histogram.set_image(adjusted)
 
     def _current_export_rgb(self) -> np.ndarray | None:
         if self._adjust_base is None:
