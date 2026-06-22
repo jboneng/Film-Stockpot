@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "id": "kodak_ultramax_400",
+  "name": "Kodak UltraMax 400",
+  "manufacturer": "Kodak",
+  "exact_variant": "KODAK ULTRA MAX 400",
+  "type": "color_negative",
+  "category": "consumer",
+  "preset_family": "kodak_consumer",
+  "monochrome": false,
+  "film": {
+    "base_iso": 400,
+    "practical_ei_range": [200, 400],
+    "recommended_ei": 250,
+    "curve_gamma": 0.64,
+    "latitude_stops": 8,
+    "color_bias": "warm neutral",
+    "saturation_index": 110,
+    "grain": { "metric": "PGI", "value": 46 },
+    "resolving_power_lp_mm": null,
+    "d_min": 0.30,
+    "d_max": 2.95,
+    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "exposures longer than 1 s may require compensation and filtration" }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 18], [96, 98], [192, 220], [255, 250]],
+    "white_balance": { "temp_k_bias": 250, "tint": 1, "rgb_gains": [1.03, 1.0, 0.98] },
+    "scanner_adjustments": { "highlights": -5, "shadows": -6, "gamma": 1.04, "saturation_pct": 110, "temp_k": 250, "tint": 1 },
+    "look": {
+      "contrast_pct": 14,
+      "lift": -0.03,
+      "gain": 1.03,
+      "color_matrix": [[1.03, 0.0, -0.02], [-0.01, 1.01, 0.0], [-0.03, 0.01, 1.02]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "PGI", "value": 46, "intensity": 0.55 }
+  },
+  "notes": "Contrastier than the Portra family. EI 200-250 for dense scans and stronger color, EI 400 nominal.",
+  "confidence": {
+    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
+    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report.md"
+}

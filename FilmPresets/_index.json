@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "description": "Ordered, grouped list of film presets for the Film Stockpot stock-selection dropdown. Each entry references a preset JSON in this folder. The Frontier base layer (_frontier_base.json) is applied beneath all of them.",
+  "base_profile": "_frontier_base.json",
+  "groups": [
+    {
+      "family": "portra",
+      "label": "Kodak Portra (professional)",
+      "presets": [
+        { "id": "kodak_portra_160", "name": "Kodak Portra 160", "file": "kodak_portra_160.json" },
+        { "id": "kodak_portra_400", "name": "Kodak Portra 400", "file": "kodak_portra_400.json" },
+        { "id": "kodak_portra_800", "name": "Kodak Portra 800", "file": "kodak_portra_800.json" }
+      ]
+    },
+    {
+      "family": "kodak_consumer",
+      "label": "Kodak consumer",
+      "presets": [
+        { "id": "kodak_gold_200", "name": "Kodak Gold 200", "file": "kodak_gold_200.json" },
+        { "id": "kodak_royal_gold_400", "name": "Kodak Royal Gold 400", "file": "kodak_royal_gold_400.json" },
+        { "id": "kodak_ultramax_400", "name": "Kodak UltraMax 400", "file": "kodak_ultramax_400.json" }
+      ]
+    },
+    {
+      "family": "kodak_pro_other",
+      "label": "Kodak Ektar",
+      "presets": [
+        { "id": "kodak_ektar_100", "name": "Kodak Ektar 100", "file": "kodak_ektar_100.json" }
+      ]
+    },
+    {
+      "family": "fuji_consumer",
+      "label": "Fujifilm consumer",
+      "presets": [
+        { "id": "fuji_c200", "name": "Fujicolor C200", "file": "fuji_c200.json" },
+        { "id": "fujifilm_200", "name": "Fujifilm 200", "file": "fujifilm_200.json" },
+        { "id": "fuji_superia_200", "name": "Fujicolor Superia 200", "file": "fuji_superia_200.json" },
+        { "id": "fuji_superia_xtra_400", "name": "Fujicolor Superia X-TRA 400", "file": "fuji_superia_xtra_400.json" },
+        { "id": "fujifilm_400", "name": "Fujifilm 400", "file": "fujifilm_400.json" },
+        { "id": "fuji_natura_1600", "name": "Fuji Natura 1600", "file": "fuji_natura_1600.json" }
+      ]
+    },
+    {
+      "family": "fuji_professional",
+      "label": "Fujifilm professional",
+      "presets": [
+        { "id": "fuji_pro_400h", "name": "Fujicolor Pro 400H", "file": "fuji_pro_400h.json" }
+      ]
+    },
+    {
+      "family": "experimental",
+      "label": "Experimental (maskless C-41)",
+      "presets": [
+        { "id": "harman_phoenix_ii", "name": "HARMAN Phoenix II", "file": "harman_phoenix_ii.json" }
+      ]
+    },
+    {
+      "family": "black_and_white",
+      "label": "Black & white",
+      "presets": [
+        { "id": "ilford_hp5_plus", "name": "Ilford HP5 Plus", "file": "ilford_hp5_plus.json" },
+        { "id": "kodak_trix_400", "name": "Kodak Tri-X 400", "file": "kodak_trix_400.json" },
+        { "id": "kodak_tmax_400", "name": "Kodak T-MAX 400", "file": "kodak_tmax_400.json" },
+        { "id": "kodak_tmax_100", "name": "Kodak T-MAX 100", "file": "kodak_tmax_100.json" }
+      ]
+    }
+  ]
+}

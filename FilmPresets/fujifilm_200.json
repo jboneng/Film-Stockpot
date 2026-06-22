@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "id": "fujifilm_200",
+  "name": "Fujifilm 200",
+  "manufacturer": "Fujifilm",
+  "exact_variant": "FUJIFILM 200 (current product; numeric proxy: FUJICOLOR C200)",
+  "type": "color_negative",
+  "category": "consumer",
+  "preset_family": "fuji_consumer",
+  "monochrome": false,
+  "proxy": {
+    "is_proxy": true,
+    "proxied_by": "FUJICOLOR C200",
+    "note": "Current FUJIFILM 200 sheet omits sensitometric data; C200 is the closest quantified 200-speed Fuji-family reference."
+  },
+  "film": {
+    "base_iso": 200,
+    "practical_ei_range": [160, 200],
+    "recommended_ei": 200,
+    "curve_gamma": 0.58,
+    "latitude_stops": 4.5,
+    "color_bias": "neutral to slightly cool",
+    "saturation_index": 100,
+    "grain": { "metric": "Diffuse RMS", "value": 4, "note": "proxied from C200; current sheet omits RMS" },
+    "resolving_power_lp_mm": null,
+    "d_min": 0.24,
+    "d_max": 2.6,
+    "reciprocity": {
+      "no_correction_to_s": 2,
+      "formula": null,
+      "table": [
+        { "exposure_s": 4, "correction_stops": 0.33 },
+        { "exposure_s": 16, "correction_stops": 0.67 },
+        { "exposure_s": 64, "correction_stops": 1.0 }
+      ]
+    }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 22], [96, 104], [192, 216], [255, 250]],
+    "white_balance": { "temp_k_bias": -50, "tint": -1, "rgb_gains": [0.99, 1.01, 1.0] },
+    "scanner_adjustments": { "highlights": -5, "shadows": -3, "gamma": 1.02, "saturation_pct": 102, "temp_k": -50, "tint": -1 },
+    "look": {
+      "contrast_pct": 9,
+      "lift": -0.02,
+      "gain": 1.02,
+      "color_matrix": [[1.0, 0.0, -0.01], [-0.01, 1.02, -0.01], [0.0, 0.01, 1.0]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.22 }
+  },
+  "notes": "Current Fuji 200 product, treated as the C200 family. More neutral than Gold 200. Frontier start: Standard tone, Saturation 0, cool-neutral balance.",
+  "confidence": {
+    "base_iso": "specified",
+    "grain": "inferred", "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated", "reciprocity": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report_2.md"
+}

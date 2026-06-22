@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "id": "kodak_royal_gold_400",
+  "name": "Kodak Royal Gold 400",
+  "manufacturer": "Kodak",
+  "exact_variant": "KODAK ROYAL GOLD 400 (Gold-400 family reference)",
+  "type": "color_negative",
+  "category": "consumer",
+  "preset_family": "kodak_consumer",
+  "monochrome": false,
+  "film": {
+    "base_iso": 400,
+    "practical_ei_range": [320, 400],
+    "recommended_ei": 400,
+    "curve_gamma": 0.62,
+    "latitude_stops": 4,
+    "color_bias": "warm-neutral, finer than many legacy 400 films",
+    "saturation_index": 110,
+    "grain": { "metric": "PGI", "value": 39 },
+    "resolving_power_lp_mm": null,
+    "d_min": 0.28,
+    "d_max": 2.8,
+    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "treat like Kodak consumer color negatives; test beyond 1 s" }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 20], [96, 102], [192, 218], [255, 250]],
+    "white_balance": { "temp_k_bias": 250, "tint": 1, "rgb_gains": [1.06, 1.0, 0.94] },
+    "scanner_adjustments": { "highlights": -6, "shadows": -4, "gamma": 1.03, "saturation_pct": 108, "temp_k": 250, "tint": 1 },
+    "look": {
+      "contrast_pct": 12,
+      "lift": -0.02,
+      "gain": 1.02,
+      "color_matrix": [[1.03, 0.0, -0.02], [0.0, 1.0, 0.0], [-0.02, 0.01, 1.01]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "PGI", "value": 39, "intensity": 0.42 }
+  },
+  "notes": "Archived high-speed Gold-family reference: warmer and a touch finer than current UltraMax. Frontier start: midway between Gold 200 and UltraMax, Standard tone, Saturation +1, slight warm bias.",
+  "confidence": {
+    "base_iso": "specified", "grain": "specified",
+    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated", "reciprocity": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report_2.md"
+}

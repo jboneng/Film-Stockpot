@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "id": "kodak_portra_400",
+  "name": "Kodak Portra 400",
+  "manufacturer": "Kodak",
+  "exact_variant": "KODAK PROFESSIONAL PORTRA 400",
+  "type": "color_negative",
+  "category": "professional",
+  "preset_family": "portra",
+  "monochrome": false,
+  "film": {
+    "base_iso": 400,
+    "practical_ei_range": [250, 400],
+    "recommended_ei": 320,
+    "curve_gamma": 0.63,
+    "latitude_stops": 12,
+    "color_bias": "neutral-warm",
+    "saturation_index": 103,
+    "grain": { "metric": "PGI", "value": 37 },
+    "resolving_power_lp_mm": null,
+    "d_min": 0.22,
+    "d_max": 3.05,
+    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "longer exposures require testing" }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 26], [96, 106], [192, 212], [255, 252]],
+    "white_balance": { "temp_k_bias": 100, "tint": 1, "rgb_gains": [1.01, 1.0, 0.99] },
+    "scanner_adjustments": { "highlights": -10, "shadows": -2, "gamma": 0.98, "saturation_pct": 102, "temp_k": 100, "tint": 1 },
+    "look": {
+      "contrast_pct": 5,
+      "lift": -0.01,
+      "gain": 1.0,
+      "color_matrix": [[1.01, 0.0, -0.01], [0.0, 1.0, 0.0], [-0.01, 0.01, 1.01]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "PGI", "value": 37, "intensity": 0.4 }
+  },
+  "notes": "Long straight midtone, soft shoulder, ~12 stops latitude. Do NOT clip highlights aggressively - favor highlight recovery and low contrast over saturation boosts. EI 320 portrait, EI 400 neutral.",
+  "confidence": {
+    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
+    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report.md"
+}

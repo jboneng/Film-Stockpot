@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "id": "fuji_natura_1600",
+  "name": "Fuji Natura 1600",
+  "manufacturer": "Fujifilm",
+  "exact_variant": "Fuji Natura 1600 (numeric proxy: FUJICOLOR SUPERIA 1600 [CU])",
+  "type": "color_negative",
+  "category": "consumer",
+  "preset_family": "fuji_consumer",
+  "monochrome": false,
+  "proxy": {
+    "is_proxy": true,
+    "proxied_by": "FUJICOLOR SUPERIA 1600 [CU]",
+    "note": "Official Natura 1600 datasheet is hard to locate publicly; Superia 1600 used as closest official proxy."
+  },
+  "film": {
+    "base_iso": 1600,
+    "practical_ei_range": [800, 1600],
+    "recommended_ei": 1000,
+    "curve_gamma": 0.68,
+    "latitude_stops": 6,
+    "color_bias": "cool-neutral, muted under low light",
+    "saturation_index": 106,
+    "grain": { "metric": "Diffuse RMS", "value": 7 },
+    "resolving_power_lp_mm": { "chart_1_6_to_1": 50, "chart_1000_to_1": 125 },
+    "d_min": 0.15,
+    "d_max": 3.20,
+    "reciprocity": {
+      "no_correction_to_s": 2,
+      "formula": null,
+      "table": [
+        { "exposure_s": 4, "correction_stops": 0.67 },
+        { "exposure_s": 16, "correction_stops": 1.5 },
+        { "exposure_s": 64, "correction_stops": 2.0 }
+      ]
+    }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 16], [96, 100], [192, 216], [255, 247]],
+    "white_balance": { "temp_k_bias": -150, "tint": -1, "rgb_gains": [0.99, 1.02, 1.0] },
+    "scanner_adjustments": { "highlights": -4, "shadows": 6, "gamma": 0.98, "saturation_pct": 106, "temp_k": -150, "tint": -1 },
+    "look": {
+      "contrast_pct": 9,
+      "lift": -0.01,
+      "gain": 1.01,
+      "color_matrix": [[0.99, 0.0, 0.01], [-0.01, 1.03, -0.01], [0.0, 0.01, 0.99]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "Diffuse RMS", "value": 7, "intensity": 0.45 }
+  },
+  "notes": "Narrow latitude (~6 stops) - shadow lift is important (note the positive shadow adjustment). Benefits from overexposure. EI 800-1000 for denser negatives, EI 1600 only when speed is truly needed.",
+  "confidence": {
+    "base_iso": "specified", "reciprocity": "specified", "grain": "specified", "resolving_power_lp_mm": "specified",
+    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report.md"
+}

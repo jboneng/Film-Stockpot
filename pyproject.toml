@@ -1,0 +1,31 @@
+[project]
+name = "film-stockpot"
+version = "0.1.0"
+description = "Apply film-stock looks to flat/log scans, Frontier-style"
+readme = "README.md"
+authors = [
+    { name = "jboneng", email = "jboneng@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "imagecodecs>=2024.0",
+    "numpy>=2.4.6",
+    "pillow>=12.2.0",
+    "pyqt6>=6.10.2",
+    "tifffile>=2024.0",
+]
+
+[project.scripts]
+film-stockpot = "film_stockpot.app:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["uv_build>=0.11.21,<0.12.0"]
+build-backend = "uv_build"

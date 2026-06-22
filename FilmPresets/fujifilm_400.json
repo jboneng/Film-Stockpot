@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "id": "fujifilm_400",
+  "name": "Fujifilm 400",
+  "manufacturer": "Fujifilm",
+  "exact_variant": "FUJIFILM 400 (current product; numeric proxy: FUJICOLOR SUPERIA X-TRA 400)",
+  "type": "color_negative",
+  "category": "consumer",
+  "preset_family": "fuji_consumer",
+  "monochrome": false,
+  "proxy": {
+    "is_proxy": true,
+    "proxied_by": "FUJICOLOR SUPERIA X-TRA 400 [CH]",
+    "note": "Current FUJIFILM 400 sheet omits optical-detail metrics; Superia X-TRA 400 is the best quantified 400-family proxy."
+  },
+  "film": {
+    "base_iso": 400,
+    "practical_ei_range": [320, 400],
+    "recommended_ei": 400,
+    "curve_gamma": 0.62,
+    "latitude_stops": 5,
+    "color_bias": "cool-neutral with Fuji green tendency",
+    "saturation_index": 110,
+    "grain": { "metric": "Diffuse RMS", "value": 4, "note": "proxied from Superia X-TRA 400" },
+    "resolving_power_lp_mm": { "chart_1_6_to_1": 50, "chart_1000_to_1": 125, "note": "proxied from Superia X-TRA 400" },
+    "d_min": 0.22,
+    "d_max": 2.8,
+    "reciprocity": {
+      "no_correction_to_s": 2,
+      "formula": null,
+      "table": [
+        { "exposure_s": 4, "correction_stops": 0.33 },
+        { "exposure_s": 16, "correction_stops": 0.67 },
+        { "exposure_s": 64, "correction_stops": 1.0 }
+      ]
+    }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 20], [96, 104], [192, 220], [255, 249]],
+    "white_balance": { "temp_k_bias": -100, "tint": -2, "rgb_gains": [0.99, 1.03, 1.0] },
+    "scanner_adjustments": { "highlights": -6, "shadows": -4, "gamma": 1.04, "saturation_pct": 110, "temp_k": -100, "tint": -2 },
+    "look": {
+      "contrast_pct": 11,
+      "lift": -0.03,
+      "gain": 1.02,
+      "color_matrix": [[1.0, -0.01, 0.0], [-0.02, 1.03, -0.01], [-0.01, 0.02, 0.99]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.28 }
+  },
+  "notes": "Current Fuji 400 product, treated as the Superia X-TRA 400 family: cool-neutral with a green tendency. Frontier start: Standard tone, Saturation +1, cool-green balance.",
+  "confidence": {
+    "base_iso": "specified",
+    "grain": "inferred", "resolving_power_lp_mm": "inferred", "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated", "reciprocity": "specified",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report_2.md"
+}

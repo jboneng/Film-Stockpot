@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "id": "fuji_pro_400h",
+  "name": "Fujicolor Pro 400H",
+  "manufacturer": "Fujifilm",
+  "exact_variant": "FUJICOLOR PRO 400H",
+  "type": "color_negative",
+  "category": "professional",
+  "preset_family": "fuji_professional",
+  "monochrome": false,
+  "film": {
+    "base_iso": 400,
+    "practical_ei_range": [200, 400],
+    "recommended_ei": 320,
+    "curve_gamma": 0.58,
+    "latitude_stops": 6,
+    "color_bias": "cool-neutral, pastel, green/cyan-leaning",
+    "saturation_index": 92,
+    "grain": { "metric": "Diffuse RMS", "value": 4 },
+    "resolving_power_lp_mm": { "chart_1_6_to_1": 50, "chart_1000_to_1": 125 },
+    "d_min": 0.18,
+    "d_max": 2.6,
+    "reciprocity": { "no_correction_to_s": 2, "formula": null, "table": null, "note": "treat like professional Fuji C-41; test for long exposures" }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 28], [96, 106], [192, 210], [255, 248]],
+    "white_balance": { "temp_k_bias": -150, "tint": -2, "rgb_gains": [0.98, 1.02, 1.03] },
+    "scanner_adjustments": { "highlights": -4, "shadows": 2, "gamma": 0.99, "saturation_pct": 94, "temp_k": -150, "tint": -2 },
+    "look": {
+      "contrast_pct": 3,
+      "lift": 0.0,
+      "gain": 1.0,
+      "color_matrix": [[0.99, 0.0, 0.01], [-0.01, 1.02, -0.01], [0.0, 0.01, 1.02]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.26 }
+  },
+  "notes": "The cool, pastel counterpoint to Portra 400: softer contrast, gentle saturation, excellent overexposure behavior. Frontier start: All Soft, Saturation -1, slight cyan/green lift, low sharpening.",
+  "confidence": {
+    "base_iso": "specified", "grain": "specified", "resolving_power_lp_mm": "specified",
+    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated", "reciprocity": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report_2.md"
+}

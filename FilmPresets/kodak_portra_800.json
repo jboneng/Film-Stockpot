@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "id": "kodak_portra_800",
+  "name": "Kodak Portra 800",
+  "manufacturer": "Kodak",
+  "exact_variant": "KODAK PROFESSIONAL PORTRA 800",
+  "type": "color_negative",
+  "category": "professional",
+  "preset_family": "portra",
+  "monochrome": false,
+  "film": {
+    "base_iso": 800,
+    "practical_ei_range": [500, 800],
+    "recommended_ei": 640,
+    "curve_gamma": 0.63,
+    "latitude_stops": 12.5,
+    "color_bias": "neutral with slightly cooler shadows",
+    "saturation_index": 110,
+    "grain": { "metric": "PGI", "value": 48 },
+    "resolving_power_lp_mm": null,
+    "d_min": 0.35,
+    "d_max": 2.95,
+    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "longer exposures require testing; official pushed curves shown at EI 1600 and 3200" }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 24], [96, 104], [192, 214], [255, 251]],
+    "white_balance": { "temp_k_bias": -50, "tint": 2, "rgb_gains": [1.0, 1.0, 1.02] },
+    "scanner_adjustments": { "highlights": -8, "shadows": -3, "gamma": 1.0, "saturation_pct": 110, "temp_k": -50, "tint": 2 },
+    "look": {
+      "contrast_pct": 8,
+      "lift": -0.02,
+      "gain": 1.01,
+      "color_matrix": [[1.01, -0.01, 0.0], [0.0, 1.0, -0.01], [-0.02, 0.01, 1.03]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "PGI", "value": 48, "intensity": 0.58 }
+  },
+  "notes": "Longest latitude in the set (~12.5 stops), slightly cooler shadows. Like Portra 400, protect highlights rather than over-saturate. EI 500-640 dense, EI 800 box speed.",
+  "confidence": {
+    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
+    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report.md"
+}

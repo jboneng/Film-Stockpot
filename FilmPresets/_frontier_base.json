@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "id": "frontier_master_0",
+  "name": "Fuji Frontier - Master 0 (base scanner layer)",
+  "description": "Shared scanner-look layer applied beneath every film delta preset. Emulates Fuji Frontier 'Master 0' defaults so the Frontier signature is added once, not baked twice. Film presets stack their film-specific deltas on top of this base.",
+  "frontier_defaults": {
+    "tone_adjustment": "Standard",
+    "hypertone": "off",
+    "full_correction": "on",
+    "cmy_key_step_width": 8,
+    "density_width": 15,
+    "bl_value": 0,
+    "sl_value": 0
+  },
+  "input_transform": {
+    "comment": "De-log / scan-normalization stage applied to the flat 16-bit input BEFORE any film look. BRIGHTNESS KNOBS: 'gamma' is the main exposure dial (>1 brighter midtones, <1 darker). 'delog_strength' blends in an S-curve to restore contrast, but it darkens everything below mid-grey, so lower it if images come out too dark. 'black_clip_pct' deepens blacks (lower = lifted/brighter shadows); 'white_clip_pct' brightens highlights (higher = more pixels pushed to white). auto_levels stretches the real black/white points back to full range, clipping a tiny percentile of outliers.",
+    "auto_levels": true,
+    "per_channel": false,
+    "black_clip_pct": 0.1,
+    "white_clip_pct": 0.1,
+    "delog_strength": 0.25,
+    "gamma": 1.25
+  },
+  "base_look": {
+    "comment": "Moderate S-curve, mild shadow deepening, slight highlight compression, low-key cyan/green coolness, saturation a few points above neutral.",
+    "tone_curve_8bit": [[0, 0], [32, 22], [96, 104], [192, 216], [255, 250]],
+    "white_balance": { "temp_k_bias": -50, "tint": -1, "rgb_gains": [0.99, 1.0, 1.01] },
+    "saturation_pct": 104,
+    "shadow_offset": -2,
+    "highlight_compression_pct": 4
+  },
+  "confidence": {
+    "frontier_defaults": "specified",
+    "base_look": "inferred"
+  },
+  "source": "Documents/film-stock-report.md"
+}

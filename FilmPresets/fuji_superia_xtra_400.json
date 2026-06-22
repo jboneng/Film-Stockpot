@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "id": "fuji_superia_xtra_400",
+  "name": "Fujicolor Superia X-TRA 400",
+  "manufacturer": "Fujifilm",
+  "exact_variant": "FUJICOLOR SUPERIA X-TRA 400 [CH]",
+  "type": "color_negative",
+  "category": "consumer",
+  "preset_family": "fuji_consumer",
+  "monochrome": false,
+  "film": {
+    "base_iso": 400,
+    "practical_ei_range": [200, 400],
+    "recommended_ei": 250,
+    "curve_gamma": 0.65,
+    "latitude_stops": 9,
+    "color_bias": "cool green/cyan",
+    "saturation_index": 112,
+    "grain": { "metric": "Diffuse RMS", "value": 4 },
+    "resolving_power_lp_mm": { "chart_1_6_to_1": 50, "chart_1000_to_1": 125 },
+    "d_min": 0.10,
+    "d_max": 2.80,
+    "reciprocity": {
+      "no_correction_to_s": 2,
+      "formula": null,
+      "table": [
+        { "exposure_s": 4, "correction_stops": 0.33 },
+        { "exposure_s": 16, "correction_stops": 0.67 },
+        { "exposure_s": 64, "correction_stops": 1.0 }
+      ]
+    }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 20], [96, 104], [192, 220], [255, 249]],
+    "white_balance": { "temp_k_bias": -100, "tint": -3, "rgb_gains": [0.99, 1.03, 1.0] },
+    "scanner_adjustments": { "highlights": -6, "shadows": -4, "gamma": 1.05, "saturation_pct": 112, "temp_k": -100, "tint": -3 },
+    "look": {
+      "contrast_pct": 12,
+      "lift": -0.03,
+      "gain": 1.02,
+      "color_matrix": [[1.0, -0.01, 0.0], [-0.02, 1.04, -0.01], [-0.01, 0.02, 0.99]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.25 }
+  },
+  "notes": "Stronger cool green/cyan separation than Superia 200. Easy to make look wrong if over-saturated after the matrix. EI 200-250 max density, EI 400 nominal.",
+  "confidence": {
+    "base_iso": "specified", "reciprocity": "specified", "grain": "specified", "resolving_power_lp_mm": "specified",
+    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report.md"
+}

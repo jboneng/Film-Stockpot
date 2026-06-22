@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "id": "harman_phoenix_ii",
+  "name": "HARMAN Phoenix II",
+  "manufacturer": "Harman",
+  "exact_variant": "HARMAN Phoenix II 200",
+  "type": "color_negative",
+  "category": "experimental",
+  "preset_family": "experimental",
+  "monochrome": false,
+  "film": {
+    "base_iso": 200,
+    "practical_ei_range": [100, 200],
+    "recommended_ei": 160,
+    "curve_gamma": 0.80,
+    "latitude_stops": 6,
+    "color_bias": "magenta-leaning, maskless C-41 (no orange mask)",
+    "saturation_index": 113,
+    "grain": { "metric": null, "value": null, "note": "finer than Phoenix I; no scalar published" },
+    "resolving_power_lp_mm": null,
+    "d_min": null,
+    "d_max": null,
+    "reciprocity": { "no_correction_to_s": 1, "formula": "Ta = Tm^1.31", "table": null, "note": "push processing not recommended" }
+  },
+  "pipeline": {
+    "tone_curve_8bit": [[0, 0], [32, 14], [96, 96], [192, 224], [255, 250]],
+    "white_balance": { "temp_k_bias": -100, "tint": 6, "rgb_gains": [1.0, 0.98, 1.04] },
+    "scanner_adjustments": { "highlights": -4, "shadows": -8, "gamma": 1.06, "saturation_pct": 112, "temp_k": -100, "tint": 6 },
+    "look": {
+      "contrast_pct": 18,
+      "lift": -0.04,
+      "gain": 1.01,
+      "color_matrix": [[1.0, -0.02, 0.0], [0.0, 0.98, 0.02], [-0.03, 0.0, 1.06]],
+      "mono_mixer": null
+    },
+    "grain": { "metric": null, "value": null, "intensity": 0.5 }
+  },
+  "native_scanner_profile": {
+    "scanner": "Fuji SP-3000",
+    "tone_adjustment": "All Hard",
+    "saturation": 2,
+    "color_balance": { "c": -2, "m": 0, "y": 0 },
+    "note": "Harman's official, unusually concrete SP-3000 starting point. The pipeline values above are an approximate RAW translation of this."
+  },
+  "notes": "Maskless C-41 with purplish negatives and narrow latitude - a dedicated profile, not a Kodak/Fuji variation. Punchier-than-default 'All Hard' tone. EI 100-160 safer, EI 200 when light demands.",
+  "confidence": {
+    "base_iso": "specified", "reciprocity": "specified", "native_scanner_profile": "specified",
+    "curve_gamma": "inferred", "latitude_stops": "estimated",
+    "grain": "unspecified", "resolving_power_lp_mm": "unspecified", "d_min": "unspecified", "d_max": "unspecified",
+    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+  },
+  "source": "Documents/film-stock-report.md"
+}
