@@ -44,7 +44,10 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
     The input is never modified. Output values are clipped to 0..1.
     """
     image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
-    grain_source = image  # pristine, pre-transform scan used for grain extraction
+    # Snapshot the pristine scan luma now (before any mutation) so the grain stage
+    # can high-pass it later. Keeping only luma lets every later stage run in
+    # place without risk of corrupting the grain source.
+    grain_source_luma = image @ _LUMA_WEIGHTS
 
     if base:
         image = _apply_input_transform(image, base.get("input_transform"))
@@ -61,7 +64,7 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
         image = _apply_color_matrix(image, look.get("color_matrix"))
         image = _apply_white_balance(image, pipeline.get("white_balance", {}))
 
-    image = np.clip(image, 0.0, 1.0)
+    np.clip(image, 0.0, 1.0, out=image)
     image = _apply_tone_curve(image, pipeline.get("tone_curve_8bit"))
     if not monochrome:
         image = _apply_per_channel_curves(image, pipeline.get("tone_curves_rgb"))
@@ -73,22 +76,23 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
         scanner.get("highlights", 0),
         scanner.get("shadows", 0),
     )
-    image = np.clip(image, 0.0, 1.0)
+    np.clip(image, 0.0, 1.0, out=image)
 
     if not monochrome:
         image = _apply_color_grading(image, pipeline.get("color_grading"))
-        image = np.clip(image, 0.0, 1.0)
+        np.clip(image, 0.0, 1.0, out=image)
         image = _apply_saturation(image, scanner.get("saturation_pct", 100))
-        image = np.clip(image, 0.0, 1.0)
+        np.clip(image, 0.0, 1.0, out=image)
 
     halation = pipeline.get("halation", defaults.get("halation"))
     image = _apply_halation(image, halation, monochrome)
-    image = np.clip(image, 0.0, 1.0)
+    np.clip(image, 0.0, 1.0, out=image)
 
     grain_extraction = pipeline.get("grain_extraction", defaults.get("grain_extraction"))
-    image = _apply_extracted_grain(image, grain_source, grain_extraction)
+    image = _apply_extracted_grain(image, grain_source_luma, grain_extraction)
 
-    return np.clip(image, 0.0, 1.0).astype(np.float32)
+    np.clip(image, 0.0, 1.0, out=image)
+    return image.astype(np.float32, copy=False)
 
 
 # ---------------------------------------------------------------------------
@@ -362,30 +366,41 @@ def _smoothstep(edge0: float, edge1: float, values: np.ndarray) -> np.ndarray:
 
 
 def _gaussian_blur(image: np.ndarray, radius: int) -> np.ndarray:
-    """Approximate a Gaussian blur with three separable box-blur passes."""
+    """Approximate a Gaussian blur with three separable box-blur passes.
+
+    Works on 2D (luma) or 3D (RGB) float32 arrays.
+    """
     radius = int(radius)
     if radius < 1:
         return image
     box = max(1, radius // 3)
-    result = image.astype(np.float32, copy=False)
+    result = image
     for _ in range(3):
-        result = _box_blur(result, box)
+        result = _box_blur_axis(result, box, 0)
+        result = _box_blur_axis(result, box, 1)
     return result
 
 
-def _box_blur(image: np.ndarray, radius: int) -> np.ndarray:
-    if radius < 1:
+def _box_blur_axis(image: np.ndarray, radius: int, axis: int) -> np.ndarray:
+    """Box-blur along one axis via a running sum (no per-pass dtype copy).
+
+    Operates on the array's native layout (no transpose), so each ``cumsum`` runs
+    over contiguous-friendly memory.
+    """
+    length = image.shape[axis]
+    if length <= 1:
         return image
-    blurred = _box_blur_axis0(image, radius)
-    blurred = np.swapaxes(_box_blur_axis0(np.swapaxes(blurred, 0, 1), radius), 0, 1)
-    return blurred
-
-
-def _box_blur_axis0(image: np.ndarray, radius: int) -> np.ndarray:
     kernel = 2 * radius + 1
-    padded = np.pad(image, ((radius + 1, radius), (0, 0), (0, 0)), mode="edge")
-    cumulative = np.cumsum(padded.astype(np.float32), axis=0)
-    return (cumulative[kernel:] - cumulative[:-kernel]) / kernel
+    pad_width = [(0, 0)] * image.ndim
+    pad_width[axis] = (radius + 1, radius)
+    padded = np.pad(image, pad_width, mode="edge")
+    cumulative = np.cumsum(padded, axis=axis)
+
+    upper = [slice(None)] * image.ndim
+    lower = [slice(None)] * image.ndim
+    upper[axis] = slice(kernel, kernel + length)
+    lower[axis] = slice(0, length)
+    return (cumulative[tuple(upper)] - cumulative[tuple(lower)]) / kernel
 
 
 # ---------------------------------------------------------------------------
@@ -393,26 +408,28 @@ def _box_blur_axis0(image: np.ndarray, radius: int) -> np.ndarray:
 # ---------------------------------------------------------------------------
 
 
-def _apply_extracted_grain(image: np.ndarray, source: np.ndarray, config: dict | None) -> np.ndarray:
+def _apply_extracted_grain(image: np.ndarray, source_luma: np.ndarray, config: dict | None) -> np.ndarray:
     """Lift the scan's real high-frequency grain and re-apply it, midtone-weighted.
 
+    ``source_luma`` is the pristine scan's luma (``H, W``). Because the box blur and
+    the luma projection are both linear, high-passing the luma is identical to
+    high-passing each channel and projecting to luma -- but a third of the work.
+
     ``config`` keys: ``strength`` (amount) and ``radius`` (high-pass size). The
-    residual is reduced to luma so grain stays monochromatic and never tints the
-    image.
+    residual is monochromatic so grain never tints the image.
     """
-    if not config or source is None:
+    if not config or source_luma is None:
         return image
     strength = float(config.get("strength", 0.0) or 0.0)
     if strength <= 0.0:
         return image
-    if source.shape[:2] != image.shape[:2]:
+    if source_luma.shape[:2] != image.shape[:2]:
         return image
 
     radius = max(1, int(config.get("radius", 1) or 1))
-    blurred = _gaussian_blur(np.clip(source, 0.0, 1.0), radius)
-    residual = np.clip(source, 0.0, 1.0) - blurred
-    luma_residual = np.sum(residual * _LUMA_WEIGHTS, axis=-1, keepdims=True)
+    luma = np.clip(source_luma, 0.0, 1.0)
+    luma_residual = (luma - _gaussian_blur(luma, radius))[:, :, np.newaxis]
 
-    luma = np.mean(image, axis=-1, keepdims=True)
-    midtone_mask = 1.0 - np.abs(luma - 0.5)
+    image_luma = np.mean(image, axis=-1, keepdims=True)
+    midtone_mask = 1.0 - np.abs(image_luma - 0.5)
     return image + luma_residual * strength * midtone_mask

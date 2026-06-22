@@ -25,7 +25,8 @@ from PyQt6.QtWidgets import (
 )
 
 from film_stockpot.image.folder import list_tiff_files
-from film_stockpot.image.io import array_to_qimage, load_image_array, save_image_array
+from film_stockpot.image.io import array_to_qimage, load_image_array
+from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.scanner import NEUTRAL, apply_scanner_adjustments
 from film_stockpot.presets.loader import load_base, load_grouped_presets
 from film_stockpot.sidecar import (
@@ -41,7 +42,7 @@ from film_stockpot.ui.widgets.film_strip import FilmStripPanel
 from film_stockpot.ui.widgets.histogram import HistogramWidget
 from film_stockpot.ui.widgets.image_viewer import ImageViewer
 from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
-from film_stockpot.ui.workers import ApplyPresetWorker, BatchExportWorker
+from film_stockpot.ui.workers import ApplyPresetWorker, BatchExportWorker, ExportOneWorker
 
 
 class MainWindow(QMainWindow):
@@ -59,9 +60,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Film Stockpot")
 
         self._original_rgb: np.ndarray | None = None
+        self._preview_original: np.ndarray | None = None
         self._current_path: str | None = None
         self._adjust_base: np.ndarray | None = None
         self._preview_base: np.ndarray | None = None
+        self._exporting_single = False
         self._apply_generation = 0
         self._active_base: dict | None = None
         self._external_preset_active = False
@@ -303,6 +306,10 @@ class MainWindow(QMainWindow):
             )
             return
 
+        # The film pipeline is expensive at full resolution, so the interactive
+        # preview is rendered from a downscaled proxy. Export recomputes from the
+        # full-resolution original, so the saved file is unaffected.
+        self._preview_original = self._downscale_for_preview(self._original_rgb)
         self._current_path = path
         self._preset_timer.stop()
         self._sidecar_timer.stop()
@@ -362,19 +369,28 @@ class MainWindow(QMainWindow):
         self._render_preset(self._current_preset(), self._base)
         self._schedule_sidecar_save()
 
+    def _downscale_for_preview(self, rgb: np.ndarray) -> np.ndarray:
+        """Return a copy no larger than ``_PREVIEW_MAX`` on its longest edge."""
+        height, width = rgb.shape[:2]
+        longest = max(height, width)
+        if longest <= self._PREVIEW_MAX:
+            return rgb
+        step = int(np.ceil(longest / self._PREVIEW_MAX))
+        return np.ascontiguousarray(rgb[::step, ::step])
+
     def _render_preset(self, preset: dict | None, base: dict | None) -> None:
-        if self._original_rgb is None:
+        if self._preview_original is None:
             return
 
         self._apply_generation += 1
         generation = self._apply_generation
 
         if preset is None:
-            self._set_base(self._original_rgb)
+            self._set_base(self._preview_original)
             return
 
         self._set_busy(True, f"Applying {preset.get('name', 'preset')}...")
-        worker = ApplyPresetWorker(self._original_rgb, preset, base)
+        worker = ApplyPresetWorker(self._preview_original, preset, base)
         worker.signals.finished.connect(
             lambda processed, gen=generation: self._on_apply_finished(processed, gen)
         )
@@ -474,13 +490,8 @@ class MainWindow(QMainWindow):
         self._viewer.set_image(array_to_qimage(adjusted))
         self._histogram.set_image(adjusted)
 
-    def _current_export_rgb(self) -> np.ndarray | None:
-        if self._adjust_base is None:
-            return None
-        return apply_scanner_adjustments(self._adjust_base, self._panel.settings())
-
     def _export_image(self) -> None:
-        if self._adjust_base is None:
+        if self._original_rgb is None or self._exporting_single:
             return
 
         export_format = self._export_panel.selected_format()
@@ -500,16 +511,32 @@ class MainWindow(QMainWindow):
         if not path.lower().endswith((".tif", ".tiff")):
             path = f"{path}.tif"
 
-        try:
-            image = self._current_export_rgb()
-            if image is None:
-                return
-            save_image_array(path, image, bit_depth=16)
-        except (OSError, ValueError) as error:
-            QMessageBox.critical(self, "Unable to Export Image", f"Could not save the image.\n\n{error}")
-            return
+        # Recompute at full resolution (the preview uses a downscaled proxy) on a
+        # background thread so the saved file is native-resolution and the UI
+        # stays responsive.
+        base = self._active_base if self._active_base is not None else self._base
+        worker = ExportOneWorker(
+            self._original_rgb,
+            self._current_preset(),
+            base,
+            self._panel.settings(),
+            path,
+        )
+        worker.signals.finished.connect(self._on_export_one_finished)
+        worker.signals.error.connect(self._on_export_one_error)
+        self._exporting_single = True
+        self._set_busy(True, "Exporting image...")
+        self._threadpool.start(worker)
 
+    def _on_export_one_finished(self, path: str) -> None:
+        self._exporting_single = False
+        self._set_busy(False)
         QMessageBox.information(self, "Export Complete", f"Image saved to:\n{path}")
+
+    def _on_export_one_error(self, message: str) -> None:
+        self._exporting_single = False
+        self._set_busy(False)
+        QMessageBox.critical(self, "Unable to Export Image", f"Could not save the image.\n\n{message}")
 
     def _default_export_name(self) -> str:
         if self._current_path:

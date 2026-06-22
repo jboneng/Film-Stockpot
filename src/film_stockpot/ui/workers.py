@@ -75,6 +75,52 @@ class ApplyPresetWorker(QRunnable):
         self.signals.finished.emit(processed)
 
 
+class ExportOneSignals(QObject):
+    """Signals emitted by :class:`ExportOneWorker`."""
+
+    finished = pyqtSignal(str)
+    error = pyqtSignal(str)
+
+
+class ExportOneWorker(QRunnable):
+    """Render one image at full resolution and save it on a background thread.
+
+    The preview is rendered from a downscaled proxy for speed; export recomputes
+    the full-resolution result here so the saved file is at native resolution.
+    """
+
+    def __init__(
+        self,
+        original_rgb: np.ndarray,
+        preset: dict | None,
+        base: dict | None,
+        adjustments: dict | None,
+        path: str,
+        bit_depth: int = 16,
+    ) -> None:
+        super().__init__()
+        self._original_rgb = original_rgb
+        self._preset = preset
+        self._base = base
+        self._adjustments = adjustments
+        self._path = path
+        self._bit_depth = bit_depth
+        self.signals = ExportOneSignals()
+
+    @pyqtSlot()
+    def run(self) -> None:
+        try:
+            rgb = self._original_rgb
+            if self._preset is not None:
+                rgb = apply_film_preset(rgb, self._preset, self._base)
+            rgb = apply_scanner_adjustments(rgb, self._adjustments)
+            save_image_array(self._path, rgb, bit_depth=self._bit_depth)
+        except Exception as error:  # noqa: BLE001 - surfaced to the UI
+            self.signals.error.emit(str(error))
+            return
+        self.signals.finished.emit(self._path)
+
+
 class BatchExportSignals(QObject):
     """Signals emitted by :class:`BatchExportWorker`."""
 
