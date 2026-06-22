@@ -356,8 +356,3 @@ Add a dependency:
 uv add <package>          # runtime
 uv add --dev <package>    # development
 ```
-
-## License
-
-No license has been specified for this project yet. Until one is added, all rights
-are reserved by the author.
