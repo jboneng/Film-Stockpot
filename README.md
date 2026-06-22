@@ -1,3 +1,7 @@
+## Screenshot
+
+![Screenshot of the application](docs/images/app-screenshot.png)
+
 # Film Stockpot
 
 Apply authentic film-stock looks to flat scans, Fuji Frontier–style.
