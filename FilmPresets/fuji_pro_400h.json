@@ -24,6 +24,17 @@
   },
   "pipeline": {
     "tone_curve_8bit": [[0, 0], [32, 28], [96, 106], [192, 210], [255, 248]],
+    "tone_curves_rgb": {
+      "r": [[0, 0], [128, 126], [255, 252]],
+      "g": [[0, 4], [64, 66], [128, 130], [255, 255]],
+      "b": [[0, 4], [128, 126], [255, 250]]
+    },
+    "color_grading": {
+      "comment": "Pro 400H signature: green-cyan shadows, gentle green midtones, soft warm-green highlights.",
+      "shadows": [-0.008, 0.004, 0.006],
+      "midtones": [0.0, 0.004, 0.0],
+      "highlights": [0.004, 0.006, -0.002]
+    },
     "white_balance": { "temp_k_bias": -150, "tint": -2, "rgb_gains": [0.98, 1.02, 1.03] },
     "scanner_adjustments": { "highlights": -4, "shadows": 2, "gamma": 0.99, "saturation_pct": 94, "temp_k": -150, "tint": -2 },
     "look": {
@@ -33,7 +44,7 @@
       "color_matrix": [[0.99, 0.0, 0.01], [-0.01, 1.02, -0.01], [0.0, 0.01, 1.02]],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.26 }
+    "grain": { "metric": "Diffuse RMS", "value": 4 }
   },
   "notes": "The cool, pastel counterpoint to Portra 400: softer contrast, gentle saturation, excellent overexposure behavior. Frontier start: All Soft, Saturation -1, slight cyan/green lift, low sharpening.",
   "confidence": {

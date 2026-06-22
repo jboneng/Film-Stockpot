@@ -42,7 +42,7 @@
       "color_matrix": [[1.0, 0.0, -0.01], [-0.01, 1.03, -0.01], [0.0, 0.01, 0.99]],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.2 }
+    "grain": { "metric": "Diffuse RMS", "value": 4 }
   },
   "notes": "Recognizable cool green/cyan drift. Fine-grained for a consumer film. EI 160 denser scans, EI 200 neutral. Set matrix and tone first, then only a small saturation trim.",
   "confidence": {

@@ -33,7 +33,7 @@
       "color_matrix": [[1.03, 0.0, -0.02], [-0.01, 1.01, 0.0], [-0.03, 0.01, 1.02]],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 46, "intensity": 0.55 }
+    "grain": { "metric": "PGI", "value": 46 }
   },
   "notes": "Contrastier than the Portra family. EI 200-250 for dense scans and stronger color, EI 400 nominal.",
   "confidence": {

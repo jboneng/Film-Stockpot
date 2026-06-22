@@ -46,7 +46,7 @@
       "color_matrix": [[1.0, -0.01, 0.0], [-0.02, 1.03, -0.01], [-0.01, 0.02, 0.99]],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.28 }
+    "grain": { "metric": "Diffuse RMS", "value": 4 }
   },
   "notes": "Current Fuji 400 product, treated as the Superia X-TRA 400 family: cool-neutral with a green tendency. Frontier start: Standard tone, Saturation +1, cool-green balance.",
   "confidence": {

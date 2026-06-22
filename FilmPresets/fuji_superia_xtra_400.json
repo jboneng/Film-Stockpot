@@ -32,6 +32,17 @@
   },
   "pipeline": {
     "tone_curve_8bit": [[0, 0], [32, 20], [96, 104], [192, 220], [255, 249]],
+    "tone_curves_rgb": {
+      "r": [[0, 0], [128, 128], [192, 196], [255, 253]],
+      "g": [[0, 5], [64, 66], [128, 130], [255, 254]],
+      "b": [[0, 4], [128, 126], [192, 190], [255, 250]]
+    },
+    "color_grading": {
+      "comment": "Superia X-TRA: punchy green shadows, slight green midtones, cool-magenta highlights.",
+      "shadows": [-0.006, 0.006, 0.004],
+      "midtones": [0.002, 0.003, 0.0],
+      "highlights": [0.006, 0.0, 0.004]
+    },
     "white_balance": { "temp_k_bias": -100, "tint": -3, "rgb_gains": [0.99, 1.03, 1.0] },
     "scanner_adjustments": { "highlights": -6, "shadows": -4, "gamma": 1.05, "saturation_pct": 112, "temp_k": -100, "tint": -3 },
     "look": {
@@ -41,7 +52,7 @@
       "color_matrix": [[1.0, -0.01, 0.0], [-0.02, 1.04, -0.01], [-0.01, 0.02, 0.99]],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.25 }
+    "grain": { "metric": "Diffuse RMS", "value": 4 }
   },
   "notes": "Stronger cool green/cyan separation than Superia 200. Easy to make look wrong if over-saturated after the matrix. EI 200-250 max density, EI 400 nominal.",
   "confidence": {

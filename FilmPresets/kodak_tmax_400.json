@@ -41,7 +41,7 @@
       "color_matrix": null,
       "mono_mixer": [0.30, 0.59, 0.11]
     },
-    "grain": { "metric": "Diffuse RMS", "value": 10, "intensity": 0.45 }
+    "grain": { "metric": "Diffuse RMS", "value": 10 }
   },
   "notes": "Cleaner, finer-grained tabular-grain monochrome - more clinical than Tri-X. Panchromatic mixer before curve/grain; saturation 0.",
   "confidence": {

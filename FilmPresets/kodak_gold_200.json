@@ -33,7 +33,7 @@
       "color_matrix": [[1.04, 0.0, -0.03], [0.0, 1.0, 0.0], [-0.02, 0.01, 1.01]],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 44, "intensity": 0.5 }
+    "grain": { "metric": "PGI", "value": 44 }
   },
   "notes": "Warmer, shorter-shoulder consumer look with early punch. EI 100 for warm/pastel, EI 200 for neutral box-speed.",
   "confidence": {

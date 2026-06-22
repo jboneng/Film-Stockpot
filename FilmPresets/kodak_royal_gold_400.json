@@ -33,7 +33,7 @@
       "color_matrix": [[1.03, 0.0, -0.02], [0.0, 1.0, 0.0], [-0.02, 0.01, 1.01]],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 39, "intensity": 0.42 }
+    "grain": { "metric": "PGI", "value": 39 }
   },
   "notes": "Archived high-speed Gold-family reference: warmer and a touch finer than current UltraMax. Frontier start: midway between Gold 200 and UltraMax, Standard tone, Saturation +1, slight warm bias.",
   "confidence": {

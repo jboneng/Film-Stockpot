@@ -42,7 +42,7 @@
       "color_matrix": null,
       "mono_mixer": [0.30, 0.59, 0.11]
     },
-    "grain": { "metric": "Diffuse RMS", "value": 17, "intensity": 0.7 }
+    "grain": { "metric": "Diffuse RMS", "value": 17 }
   },
   "notes": "Punchy, classic reportage monochrome with prominent cubic grain. Apply the panchromatic mono mixer before curve/grain; saturation forced to 0. EI 400 normal; pushes well to 1600/3200.",
   "confidence": {

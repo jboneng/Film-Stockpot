@@ -24,6 +24,17 @@
   },
   "pipeline": {
     "tone_curve_8bit": [[0, 0], [32, 24], [96, 104], [192, 214], [255, 251]],
+    "tone_curves_rgb": {
+      "r": [[0, 2], [128, 132], [255, 254]],
+      "g": [[0, 0], [128, 128], [255, 255]],
+      "b": [[0, 9], [64, 66], [128, 124], [192, 186], [255, 246]]
+    },
+    "color_grading": {
+      "comment": "Portra 800: noticeably cooler shadows, warm highlights, slightly denser.",
+      "shadows": [-0.004, 0.0, 0.011],
+      "midtones": [0.005, 0.001, -0.002],
+      "highlights": [0.01, 0.005, -0.008]
+    },
     "white_balance": { "temp_k_bias": -50, "tint": 2, "rgb_gains": [1.0, 1.0, 1.02] },
     "scanner_adjustments": { "highlights": -8, "shadows": -3, "gamma": 1.0, "saturation_pct": 110, "temp_k": -50, "tint": 2 },
     "look": {
@@ -33,7 +44,7 @@
       "color_matrix": [[1.01, -0.01, 0.0], [0.0, 1.0, -0.01], [-0.02, 0.01, 1.03]],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 48, "intensity": 0.58 }
+    "grain": { "metric": "PGI", "value": 48 }
   },
   "notes": "Longest latitude in the set (~12.5 stops), slightly cooler shadows. Like Portra 400, protect highlights rather than over-saturate. EI 500-640 dense, EI 800 box speed.",
   "confidence": {

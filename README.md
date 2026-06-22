@@ -44,6 +44,9 @@ non-destructive, saved per image, and can be batch-applied across a whole roll.
   exports before grading, so images don't come out washed out.
 - **Film-stock emulation** — a library of color and black & white stocks (Kodak
   Portra/Gold/Ektar/Tri-X/T-MAX, Fujicolor, Ilford HP5, HARMAN Phoenix II, and more).
+- **Authentic film character** — per-channel tone-curve crossover, tone-zoned color
+  grading, halation bloom, and grain recovered from the scan itself — never
+  synthetic noise.
 - **Frontier-style operator controls** — density, gamma, CMY color balance, tone
   (Soft → All Hard), highlight/shadow, saturation, and sharpness, all with live
   preview.
@@ -63,12 +66,16 @@ The processing pipeline is intentionally stateless — it always grades from the
 pristine original, so switching presets never stacks edits.
 
 1. **Input transform (base profile)** — expands the flat/log scan to full range via
-   auto-levels, a configurable de-log S-curve, and a brightness gamma.
-2. **Film look** — applies the stock's color matrix (or mono mixer for B&W) and
-   white balance.
+   auto-levels, per-channel **neutralization** (removes residual scan cast), a
+   configurable de-log S-curve, and a brightness gamma.
+2. **Film look** — applies the stock's color matrix (or mono mixer for B&W), white
+   balance, and **per-channel tone curves** that reproduce R/G/B crossover.
 3. **Tone & grade** — tone curve, contrast, lift/gain, gamma, and highlight/shadow
    shaping.
-4. **Color & detail** — saturation and film grain.
+4. **Film character** — tone-zoned **color grading** (split-tone shadows/mids/
+   highlights), saturation, **halation** (highlight bloom), and **grain extracted
+   from the scan itself** — the only grain in the output is the grain that was
+   physically on the film.
 5. **Operator adjustments** — your live Frontier-style slider tweaks are applied on
    top, mirroring how a lab operator fine-tunes a scan.
 
@@ -201,8 +208,7 @@ Everything the renderer reads lives under the top-level `monochrome` flag and th
       "gain": 1.0,
       "color_matrix": [[1.01, 0.0, -0.01], [0.0, 1.0, 0.0], [-0.01, 0.01, 1.01]],
       "mono_mixer": null
-    },
-    "grain": { "intensity": 0.4 }
+    }
   }
 }
 ```
@@ -231,7 +237,10 @@ input transform. Color and B&W differ where noted.
 | `scanner_adjustments.highlights` | number (%) | `0` | `+` lifts highlights, `-` compresses them. |
 | `scanner_adjustments.shadows` | number (%) | `0` | `+` lifts shadows, `-` deepens them. |
 | `scanner_adjustments.saturation_pct` | number (%) | `100` | Color only. `100` = unchanged, `120` = +20% saturation, `0` = grayscale. |
-| `grain.intensity` | number `0`–~`1` | `0.0` | Midtone-weighted film grain. `0.3`–`0.5` is typical; `0` disables. |
+
+> Grain is **not** synthesized. The only grain in the output is the film's own
+> grain, recovered from the scan by `grain_extraction` (see below). The `grain`
+> block in the shipped presets (`metric`, `value`) is datasheet metadata only.
 
 Notes:
 
@@ -244,7 +253,47 @@ Notes:
   `color_matrix: null`, and `saturation_pct` is ignored (the image is already
   gray). See [`ilford_hp5_plus.json`](FilmPresets/ilford_hp5_plus.json).
 
-### 4. Iterate
+### 4. Film-character fields (optional, advanced)
+
+These reproduce the parts of a film look that simple global controls can't —
+tone-dependent color, channel crossover, halation, and real grain. All are
+optional; omit a block and that stage is skipped. **Halation and grain extraction
+also have global defaults in the [Frontier base](#tuning-the-frontier-base-profile)**,
+so a preset only needs these blocks to *override* the base behavior.
+
+| Field | Type | What it does |
+|-------|------|--------------|
+| `tone_curves_rgb` | `{ "r": [...], "g": [...], "b": [...] }` | Per-channel tone curves (same `[x, y]` 0–255 format). The R/G/B difference creates **color crossover** — e.g. cool shadows + warm highlights. Color presets only. |
+| `color_grading.shadows` / `.midtones` / `.highlights` | `[r, g, b]` offsets | **Split-tone** color: adds a different tint to each tonal zone (luma-weighted). Tiny values, e.g. `0.005`–`0.012`. Color presets only. |
+| `halation.intensity` | number | Strength of the highlight bloom (`0` disables). |
+| `halation.threshold` | number `0`–`1` | Luma above which highlights bloom. |
+| `halation.radius` | number | Bloom size; resolution-independent (scaled to image size). |
+| `halation.color` | `[r, g, b]` | Bloom tint (classic film red/orange ≈ `[1.0, 0.32, 0.1]`). Forced neutral for B&W. |
+| `grain_extraction.strength` | number | Amount of the scan's **real** high-frequency grain to lift out and re-apply (monochromatic, midtone-weighted). |
+| `grain_extraction.radius` | number (px) | High-pass size used to isolate grain (`1` keeps the finest detail). |
+
+Example block inside `pipeline` (see
+[`kodak_portra_400.json`](FilmPresets/kodak_portra_400.json) for a live one):
+
+```json
+"tone_curves_rgb": {
+  "r": [[0, 2], [128, 132], [255, 254]],
+  "g": [[0, 0], [128, 128], [255, 255]],
+  "b": [[0, 6], [128, 124], [255, 246]]
+},
+"color_grading": {
+  "shadows":    [-0.004, 0.0,   0.006],
+  "midtones":   [ 0.006, 0.002, -0.004],
+  "highlights": [ 0.012, 0.006, -0.01]
+},
+"halation":        { "intensity": 0.15, "threshold": 0.7, "radius": 12, "color": [1.0, 0.3, 0.1] },
+"grain_extraction": { "strength": 0.4, "radius": 1 }
+```
+
+> `grain_extraction` recovers each stock's **own** grain from the flat scan. This
+> is the only grain source — no synthetic grain is ever added.
+
+### 5. Iterate
 
 There's no build step. Edit the JSON, save, and **restart the app** (presets are
 loaded once at startup). Pick your stock from the dropdown to see the result. Work
@@ -263,10 +312,9 @@ expand it back to a normal-looking, full-range image *before* any film look is
 applied. Get this right once and every preset benefits; get it wrong and every
 preset will look washed out or crushed.
 
-> **Important:** only the `input_transform` block is read by the renderer. The
-> other blocks in this file (`frontier_defaults`, `base_look`, `confidence`,
-> `source`) are documentation and have **no effect** on the output. If you want to
-> change the base look, change `input_transform`.
+> **Important:** only the `input_transform` and `look_defaults` blocks are read by
+> the renderer. The other blocks in this file (`frontier_defaults`, `base_look`,
+> `confidence`, `source`) are documentation and have **no effect** on the output.
 
 ### The `input_transform` block
 
@@ -276,7 +324,9 @@ preset will look washed out or crushed.
   "per_channel": false,
   "black_clip_pct": 0.1,
   "white_clip_pct": 0.1,
-  "delog_strength": 0.25,
+  "neutralize": true,
+  "neutralize_strength": 0.4,
+  "delog_strength": 0.1,
   "gamma": 1.25
 }
 ```
@@ -289,8 +339,27 @@ Stages run top to bottom:
 | `per_channel` | bool | When `true`, auto-levels each RGB channel independently (removes color casts but can shift white balance). When `false`, uses a shared luma range (preserves color). | Keep `false` for NegPy exports unless you specifically want aggressive per-channel neutralization. |
 | `black_clip_pct` | number (%) | Percentile of darkest pixels clipped to black. | Higher = deeper, contrastier blacks. Lower = lifted/brighter shadows. Typical `0.05`–`0.5`. |
 | `white_clip_pct` | number (%) | Percentile of brightest pixels clipped to white. | Higher = brighter highlights (more pixels pushed to white). Typical `0.05`–`0.5`. |
+| `neutralize` | bool | Aligns the per-channel medians toward a common grey, stripping residual scan cast so every stock starts from a consistent neutral anchor. | Leave `true` for consistent color across a roll; set `false` to preserve the scan's own cast. |
+| `neutralize_strength` | number `0`–`1` | How strongly to neutralize (`0` = off, `1` = fully equalize channel medians). | `0.3`–`0.5` removes cast without flattening intentional color. |
 | `delog_strength` | number `0`–`1` | Blends in an S-curve to restore contrast lost in the flat scan. | More = punchier but darker below mid-grey. If images come out too dark/contrasty, **lower this first**. |
 | `gamma` | number | Main exposure/brightness dial applied after de-log. | `>1` brightens midtones, `<1` darkens. This is the knob to reach for if everything is too dark or too bright. |
+
+### The `look_defaults` block
+
+`look_defaults` carries film characteristics applied to **every** stock unless a
+preset overrides them. Today it holds the default **halation** and **grain
+extraction** settings (same fields documented in
+[Film-character fields](#creating-and-editing-film-presets)):
+
+```json
+"look_defaults": {
+  "halation":        { "intensity": 0.12, "threshold": 0.72, "radius": 10, "color": [1.0, 0.32, 0.1] },
+  "grain_extraction": { "strength": 0.35, "radius": 1 }
+}
+```
+
+A preset that defines its own `halation` or `grain_extraction` under `pipeline`
+takes precedence over these defaults for that stock.
 
 ### Recommended tuning order
 
@@ -300,8 +369,9 @@ Stages run top to bottom:
    shadows, raise for more punch).
 3. **Blacks not black / highlights not white?** Nudge `black_clip_pct` and
    `white_clip_pct` (small steps — these clip real data).
-4. **Color cast across the whole roll?** Consider `per_channel: true`, but re-check
-   your stocks afterward since it changes the starting white balance.
+4. **Color cast across the whole roll?** Raise `neutralize_strength` (or, more
+   aggressively, set `per_channel: true` and re-check your stocks afterward).
+5. **Halation/grain too strong globally?** Lower the `look_defaults` values.
 
 Changes here affect **all** presets, so tune against a few representative frames
 (a high-key shot, a low-key shot, and a neutral mid-tone one) and restart the app

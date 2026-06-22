@@ -46,7 +46,7 @@
       "color_matrix": [[1.0, 0.0, -0.01], [-0.01, 1.02, -0.01], [0.0, 0.01, 1.0]],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 4, "intensity": 0.22 }
+    "grain": { "metric": "Diffuse RMS", "value": 4 }
   },
   "notes": "Current Fuji 200 product, treated as the C200 family. More neutral than Gold 200. Frontier start: Standard tone, Saturation 0, cool-neutral balance.",
   "confidence": {

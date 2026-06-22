@@ -24,6 +24,17 @@
   },
   "pipeline": {
     "tone_curve_8bit": [[0, 0], [32, 24], [96, 104], [192, 214], [255, 251]],
+    "tone_curves_rgb": {
+      "r": [[0, 1], [128, 130], [255, 254]],
+      "g": [[0, 0], [128, 128], [255, 255]],
+      "b": [[0, 5], [128, 126], [192, 188], [255, 248]]
+    },
+    "color_grading": {
+      "comment": "Portra 160: gentle warmth, finest of the line - softer split than 400.",
+      "shadows": [-0.003, 0.0, 0.005],
+      "midtones": [0.004, 0.001, -0.003],
+      "highlights": [0.009, 0.004, -0.008]
+    },
     "white_balance": { "temp_k_bias": 150, "tint": 1, "rgb_gains": [1.02, 1.0, 0.99] },
     "scanner_adjustments": { "highlights": -8, "shadows": -2, "gamma": 0.99, "saturation_pct": 100, "temp_k": 150, "tint": 1 },
     "look": {
@@ -33,7 +44,7 @@
       "color_matrix": [[1.02, 0.0, -0.02], [0.0, 1.0, 0.0], [-0.01, 0.01, 1.01]],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 28, "intensity": 0.25 }
+    "grain": { "metric": "PGI", "value": 28 }
   },
   "notes": "Neutral reference of the set (saturation index 100). Long toe, soft shoulder, gentle pastel highlights. EI 100-125 portrait, EI 160 neutral.",
   "confidence": {

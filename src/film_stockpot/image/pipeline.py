@@ -3,6 +3,22 @@
 Applies a single film preset to a flat/log float32 RGB image (values in 0..1).
 The pipeline is intentionally stateless: callers always pass the pristine
 original image, so applying a different preset never stacks on a prior result.
+
+Beyond the basic grade, the pipeline recovers and re-applies film-specific
+characteristics that are latent in a flat scan:
+
+* **Input analysis** (``analyze_input`` / ``input_transform.neutralize``) measures
+  per-channel black/white points and removes residual casts so every stock starts
+  from a consistent neutral anchor.
+* **Tone-zoned color grading** (``color_grading``) tints shadows, midtones, and
+  highlights independently -- the core of a film's color-by-tone signature.
+* **Per-channel tone curves** (``tone_curves_rgb``) reproduce the R/G/B crossover
+  that a single shared curve cannot express.
+* **Halation** (``halation``) adds the red/orange highlight bloom characteristic of
+  film's anti-halation layer.
+* **Grain extraction** (``grain_extraction``) lifts the real grain residual out of
+  the scan and re-applies it. No synthetic grain is ever added -- the only grain in
+  the output is the grain that was physically on the film.
 """
 
 from __future__ import annotations
@@ -11,7 +27,7 @@ import numpy as np
 
 _LUMA_WEIGHTS = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
 _DEFAULT_MONO_MIXER = np.array([0.299, 0.587, 0.114], dtype=np.float32)
-_GRAIN_MAX_SIGMA = 0.035
+_CHANNELS = ("r", "g", "b")
 
 
 def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -> np.ndarray:
@@ -22,9 +38,13 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
     range, preventing the washed-out result that comes from grading a log scan
     directly. The film look is then applied on top.
 
+    ``base`` may also provide ``look_defaults`` (e.g. halation and grain
+    extraction) that apply to every stock unless the preset overrides them.
+
     The input is never modified. Output values are clipped to 0..1.
     """
     image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
+    grain_source = image  # pristine, pre-transform scan used for grain extraction
 
     if base:
         image = _apply_input_transform(image, base.get("input_transform"))
@@ -32,6 +52,7 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
     pipeline = preset.get("pipeline", {})
     look = pipeline.get("look", {}) or {}
     scanner = pipeline.get("scanner_adjustments", {}) or {}
+    defaults = (base or {}).get("look_defaults", {}) or {}
     monochrome = bool(preset.get("monochrome", False))
 
     if monochrome:
@@ -42,6 +63,8 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
 
     image = np.clip(image, 0.0, 1.0)
     image = _apply_tone_curve(image, pipeline.get("tone_curve_8bit"))
+    if not monochrome:
+        image = _apply_per_channel_curves(image, pipeline.get("tone_curves_rgb"))
     image = _apply_contrast(image, look.get("contrast_pct", 0))
     image = _apply_lift_gain(image, look.get("lift", 0.0), look.get("gain", 1.0))
     image = _apply_gamma(image, scanner.get("gamma", 1.0))
@@ -53,13 +76,49 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
     image = np.clip(image, 0.0, 1.0)
 
     if not monochrome:
+        image = _apply_color_grading(image, pipeline.get("color_grading"))
+        image = np.clip(image, 0.0, 1.0)
         image = _apply_saturation(image, scanner.get("saturation_pct", 100))
         image = np.clip(image, 0.0, 1.0)
 
-    grain = pipeline.get("grain", {}) or {}
-    image = _apply_grain(image, grain.get("intensity", 0.0) or 0.0)
+    halation = pipeline.get("halation", defaults.get("halation"))
+    image = _apply_halation(image, halation, monochrome)
+    image = np.clip(image, 0.0, 1.0)
+
+    grain_extraction = pipeline.get("grain_extraction", defaults.get("grain_extraction"))
+    image = _apply_extracted_grain(image, grain_source, grain_extraction)
 
     return np.clip(image, 0.0, 1.0).astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# Input analysis (Feature 1)
+# ---------------------------------------------------------------------------
+
+
+def analyze_input(image: np.ndarray, black_pct: float = 0.1, white_pct: float = 0.1) -> dict:
+    """Measure per-channel black/white points and median of a flat scan.
+
+    Returns a dict keyed by ``"r"``, ``"g"``, ``"b"`` (each with ``black``,
+    ``white``, ``median``) plus an overall ``luma_median``. The per-channel
+    black/white spread encodes the film's color crossover; the medians reveal any
+    residual cast left in the flat scan.
+    """
+    data = np.clip(np.asarray(image, dtype=np.float32), 0.0, 1.0)
+    if data.ndim == 2:
+        data = np.stack([data] * 3, axis=-1)
+
+    stats: dict = {}
+    for index, channel in enumerate(_CHANNELS):
+        plane = data[:, :, index]
+        stats[channel] = {
+            "black": float(np.percentile(plane, black_pct)),
+            "white": float(np.percentile(plane, 100.0 - white_pct)),
+            "median": float(np.median(plane)),
+        }
+    luma = np.sum(data * _LUMA_WEIGHTS, axis=-1)
+    stats["luma_median"] = float(np.median(luma))
+    return stats
 
 
 def _apply_input_transform(image: np.ndarray, transform: dict | None) -> np.ndarray:
@@ -76,6 +135,9 @@ def _apply_input_transform(image: np.ndarray, transform: dict | None) -> np.ndar
             bool(transform.get("per_channel", False)),
         )
 
+    if transform.get("neutralize", False):
+        result = _neutralize(result, float(transform.get("neutralize_strength", 1.0) or 0.0))
+
     strength = float(transform.get("delog_strength", 0.0) or 0.0)
     if strength > 0.0:
         result = _apply_delog(result, strength)
@@ -85,6 +147,22 @@ def _apply_input_transform(image: np.ndarray, transform: dict | None) -> np.ndar
         result = np.clip(result, 0.0, 1.0) ** (1.0 / gamma)
 
     return np.clip(result, 0.0, 1.0)
+
+
+def _neutralize(image: np.ndarray, strength: float) -> np.ndarray:
+    """Align per-channel medians toward a common gray, removing residual cast."""
+    if strength <= 0.0 or image.ndim != 3 or image.shape[2] < 3:
+        return image
+    clipped = np.clip(image, 0.0, 1.0)
+    medians = np.array(
+        [np.median(clipped[:, :, channel]) for channel in range(3)],
+        dtype=np.float32,
+    )
+    target = float(np.mean(medians))
+    safe = np.where(medians > 1e-4, medians, 1.0)
+    gains = target / safe
+    gains = 1.0 * (1.0 - strength) + gains * strength
+    return np.clip(image * gains.astype(np.float32), 0.0, 1.0)
 
 
 def _auto_levels(image: np.ndarray, black_clip_pct: float, white_clip_pct: float, per_channel: bool) -> np.ndarray:
@@ -115,6 +193,11 @@ def _apply_delog(image: np.ndarray, strength: float) -> np.ndarray:
     return clipped * (1.0 - strength) + s_curve * strength
 
 
+# ---------------------------------------------------------------------------
+# Color / tone look
+# ---------------------------------------------------------------------------
+
+
 def _to_monochrome(image: np.ndarray, mixer: list | None) -> np.ndarray:
     weights = np.array(mixer, dtype=np.float32) if mixer else _DEFAULT_MONO_MIXER
     luma = image @ weights
@@ -142,6 +225,54 @@ def _apply_tone_curve(image: np.ndarray, curve: list | None) -> np.ndarray:
     ys = np.array([point[1] for point in curve], dtype=np.float32) / 255.0
     order = np.argsort(xs)
     return np.interp(image, xs[order], ys[order]).astype(np.float32)
+
+
+def _apply_per_channel_curves(image: np.ndarray, curves: dict | None) -> np.ndarray:
+    """Apply independent R/G/B tone curves to reproduce film color crossover.
+
+    ``curves`` maps ``"r"``/``"g"``/``"b"`` to a list of ``[x, y]`` points in
+    0..255 space. Missing channels are left untouched.
+    """
+    if not curves or image.ndim != 3 or image.shape[2] < 3:
+        return image
+
+    result = image.copy()
+    touched = False
+    for index, channel in enumerate(_CHANNELS):
+        curve = curves.get(channel)
+        if not curve:
+            continue
+        xs = np.array([point[0] for point in curve], dtype=np.float32) / 255.0
+        ys = np.array([point[1] for point in curve], dtype=np.float32) / 255.0
+        order = np.argsort(xs)
+        result[:, :, index] = np.interp(image[:, :, index], xs[order], ys[order])
+        touched = True
+
+    return result.astype(np.float32) if touched else image
+
+
+def _apply_color_grading(image: np.ndarray, grading: dict | None) -> np.ndarray:
+    """Tint shadows, midtones, and highlights independently (split-tone).
+
+    Each zone is an additive ``[r, g, b]`` offset. Zone membership is derived from
+    luma with overlapping triangular weights, so the result is smooth.
+    """
+    if not grading:
+        return image
+
+    shadows = np.array(grading.get("shadows", (0.0, 0.0, 0.0)), dtype=np.float32)
+    midtones = np.array(grading.get("midtones", (0.0, 0.0, 0.0)), dtype=np.float32)
+    highlights = np.array(grading.get("highlights", (0.0, 0.0, 0.0)), dtype=np.float32)
+    if not (np.any(shadows) or np.any(midtones) or np.any(highlights)):
+        return image
+
+    luma = np.sum(image * _LUMA_WEIGHTS, axis=-1, keepdims=True)
+    shadow_w = np.clip(1.0 - luma * 2.0, 0.0, 1.0)
+    highlight_w = np.clip(luma * 2.0 - 1.0, 0.0, 1.0)
+    mid_w = 1.0 - shadow_w - highlight_w
+
+    result = image + shadow_w * shadows + mid_w * midtones + highlight_w * highlights
+    return result.astype(np.float32)
 
 
 def _apply_contrast(image: np.ndarray, contrast_pct: float) -> np.ndarray:
@@ -187,13 +318,101 @@ def _apply_saturation(image: np.ndarray, saturation_pct: float) -> np.ndarray:
     return luma + (image - luma) * factor
 
 
-def _apply_grain(image: np.ndarray, intensity: float) -> np.ndarray:
-    intensity = float(intensity)
+# ---------------------------------------------------------------------------
+# Halation (Feature 3)
+# ---------------------------------------------------------------------------
+
+
+def _apply_halation(image: np.ndarray, halation: dict | None, monochrome: bool = False) -> np.ndarray:
+    """Add a blurred highlight bloom, screen-blended over the image.
+
+    ``halation`` keys: ``intensity`` (strength), ``threshold`` (highlight luma
+    cutoff), ``radius`` (blur size, resolution-independent), and ``color`` (tint,
+    forced neutral for monochrome stocks).
+    """
+    if not halation or image.ndim != 3 or image.shape[2] < 3:
+        return image
+
+    intensity = float(halation.get("intensity", 0.0) or 0.0)
     if intensity <= 0.0:
         return image
-    sigma = _GRAIN_MAX_SIGMA * intensity
-    height, width = image.shape[:2]
-    noise = np.random.normal(0.0, sigma, (height, width, 1)).astype(np.float32)
+
+    threshold = float(halation.get("threshold", 0.65))
+    radius = float(halation.get("radius", 12.0))
+    color = [1.0, 1.0, 1.0] if monochrome else halation.get("color", [1.0, 0.35, 0.12])
+    tint = np.array(color, dtype=np.float32)
+
+    luma = np.sum(image * _LUMA_WEIGHTS, axis=-1, keepdims=True)
+    mask = _smoothstep(threshold, min(1.0, threshold + 0.3), luma)
+    source = mask * image
+
+    longest = max(image.shape[0], image.shape[1])
+    px = max(1, int(round(radius * longest / 1500.0)))
+    glow = _gaussian_blur(source, px)
+
+    halo = np.clip(glow * tint * intensity, 0.0, 1.0)
+    return 1.0 - (1.0 - image) * (1.0 - halo)
+
+
+def _smoothstep(edge0: float, edge1: float, values: np.ndarray) -> np.ndarray:
+    if edge1 <= edge0:
+        return (values >= edge1).astype(np.float32)
+    t = np.clip((values - edge0) / (edge1 - edge0), 0.0, 1.0)
+    return (t * t * (3.0 - 2.0 * t)).astype(np.float32)
+
+
+def _gaussian_blur(image: np.ndarray, radius: int) -> np.ndarray:
+    """Approximate a Gaussian blur with three separable box-blur passes."""
+    radius = int(radius)
+    if radius < 1:
+        return image
+    box = max(1, radius // 3)
+    result = image.astype(np.float32, copy=False)
+    for _ in range(3):
+        result = _box_blur(result, box)
+    return result
+
+
+def _box_blur(image: np.ndarray, radius: int) -> np.ndarray:
+    if radius < 1:
+        return image
+    blurred = _box_blur_axis0(image, radius)
+    blurred = np.swapaxes(_box_blur_axis0(np.swapaxes(blurred, 0, 1), radius), 0, 1)
+    return blurred
+
+
+def _box_blur_axis0(image: np.ndarray, radius: int) -> np.ndarray:
+    kernel = 2 * radius + 1
+    padded = np.pad(image, ((radius + 1, radius), (0, 0), (0, 0)), mode="edge")
+    cumulative = np.cumsum(padded.astype(np.float32), axis=0)
+    return (cumulative[kernel:] - cumulative[:-kernel]) / kernel
+
+
+# ---------------------------------------------------------------------------
+# Grain extraction (Feature 5)
+# ---------------------------------------------------------------------------
+
+
+def _apply_extracted_grain(image: np.ndarray, source: np.ndarray, config: dict | None) -> np.ndarray:
+    """Lift the scan's real high-frequency grain and re-apply it, midtone-weighted.
+
+    ``config`` keys: ``strength`` (amount) and ``radius`` (high-pass size). The
+    residual is reduced to luma so grain stays monochromatic and never tints the
+    image.
+    """
+    if not config or source is None:
+        return image
+    strength = float(config.get("strength", 0.0) or 0.0)
+    if strength <= 0.0:
+        return image
+    if source.shape[:2] != image.shape[:2]:
+        return image
+
+    radius = max(1, int(config.get("radius", 1) or 1))
+    blurred = _gaussian_blur(np.clip(source, 0.0, 1.0), radius)
+    residual = np.clip(source, 0.0, 1.0) - blurred
+    luma_residual = np.sum(residual * _LUMA_WEIGHTS, axis=-1, keepdims=True)
+
     luma = np.mean(image, axis=-1, keepdims=True)
     midtone_mask = 1.0 - np.abs(luma - 0.5)
-    return image + noise * midtone_mask
+    return image + luma_residual * strength * midtone_mask

@@ -46,7 +46,7 @@
       "color_matrix": [[0.99, 0.0, 0.01], [-0.01, 1.03, -0.01], [0.0, 0.01, 0.99]],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 7, "intensity": 0.45 }
+    "grain": { "metric": "Diffuse RMS", "value": 7 }
   },
   "notes": "Narrow latitude (~6 stops) - shadow lift is important (note the positive shadow adjustment). Benefits from overexposure. EI 800-1000 for denser negatives, EI 1600 only when speed is truly needed.",
   "confidence": {

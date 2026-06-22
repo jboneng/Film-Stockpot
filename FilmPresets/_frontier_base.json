@@ -13,13 +13,28 @@
     "sl_value": 0
   },
   "input_transform": {
-    "comment": "De-log / scan-normalization stage applied to the flat 16-bit input BEFORE any film look. BRIGHTNESS KNOBS: 'gamma' is the main exposure dial (>1 brighter midtones, <1 darker). 'delog_strength' blends in an S-curve to restore contrast, but it darkens everything below mid-grey, so lower it if images come out too dark. 'black_clip_pct' deepens blacks (lower = lifted/brighter shadows); 'white_clip_pct' brightens highlights (higher = more pixels pushed to white). auto_levels stretches the real black/white points back to full range, clipping a tiny percentile of outliers.",
+    "comment": "De-log / scan-normalization stage applied to the flat 16-bit input BEFORE any film look. BRIGHTNESS KNOBS: 'gamma' is the main exposure dial (>1 brighter midtones, <1 darker). 'delog_strength' blends in an S-curve to restore contrast, but it darkens everything below mid-grey, so lower it if images come out too dark. 'black_clip_pct' deepens blacks (lower = lifted/brighter shadows); 'white_clip_pct' brightens highlights (higher = more pixels pushed to white). auto_levels stretches the real black/white points back to full range, clipping a tiny percentile of outliers. neutralize aligns the per-channel medians toward a common grey to strip residual scan cast so every stock starts from a consistent neutral anchor; neutralize_strength is 0..1 (0 = off).",
     "auto_levels": true,
     "per_channel": false,
     "black_clip_pct": 0.1,
     "white_clip_pct": 0.1,
-    "delog_strength": 0.25,
+    "neutralize": true,
+    "neutralize_strength": 0.4,
+    "delog_strength": 0.1,
     "gamma": 1.25
+  },
+  "look_defaults": {
+    "comment": "Film characteristics applied to EVERY stock unless its preset overrides them. 'halation' adds the red/orange highlight bloom from film's anti-halation layer (intensity = strength, threshold = highlight luma cutoff, radius = resolution-independent bloom size, color = tint; tint is forced neutral for monochrome stocks). 'grain_extraction' lifts the scan's own high-frequency grain residual and re-applies it midtone-weighted (strength = amount, radius = high-pass size). Override either block under a preset's 'pipeline'.",
+    "halation": {
+      "intensity": 0.12,
+      "threshold": 0.72,
+      "radius": 10,
+      "color": [1.0, 0.32, 0.1]
+    },
+    "grain_extraction": {
+      "strength": 0.35,
+      "radius": 1
+    }
   },
   "base_look": {
     "comment": "Moderate S-curve, mild shadow deepening, slight highlight compression, low-key cyan/green coolness, saturation a few points above neutral.",

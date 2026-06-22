@@ -39,7 +39,7 @@
       "color_matrix": null,
       "mono_mixer": [0.30, 0.59, 0.11]
     },
-    "grain": { "metric": null, "value": null, "intensity": 0.55 }
+    "grain": { "metric": null, "value": null }
   },
   "notes": "Monochrome: apply the panchromatic mono mixer (R 0.30 / G 0.59 / B 0.11) BEFORE grain and curve treatment, then saturation is forced to 0. Tonal curve and grain dominate the look far more than any channel nuance. EI 400 normal; EI 800/1600 push; EI 3200 emergency/high-grit. Most flexible pushable stock in the set.",
   "confidence": {

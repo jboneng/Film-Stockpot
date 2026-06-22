@@ -24,6 +24,17 @@
   },
   "pipeline": {
     "tone_curve_8bit": [[0, 0], [32, 26], [96, 106], [192, 212], [255, 252]],
+    "tone_curves_rgb": {
+      "r": [[0, 2], [64, 66], [128, 132], [192, 196], [255, 254]],
+      "g": [[0, 0], [128, 128], [255, 255]],
+      "b": [[0, 6], [64, 64], [128, 124], [192, 186], [255, 246]]
+    },
+    "color_grading": {
+      "comment": "Portra signature: cool/neutral shadows, warm skin midtones, creamy warm highlights.",
+      "shadows": [-0.004, 0.0, 0.006],
+      "midtones": [0.006, 0.002, -0.004],
+      "highlights": [0.012, 0.006, -0.01]
+    },
     "white_balance": { "temp_k_bias": 100, "tint": 1, "rgb_gains": [1.01, 1.0, 0.99] },
     "scanner_adjustments": { "highlights": -10, "shadows": -2, "gamma": 0.98, "saturation_pct": 102, "temp_k": 100, "tint": 1 },
     "look": {
@@ -33,7 +44,7 @@
       "color_matrix": [[1.01, 0.0, -0.01], [0.0, 1.0, 0.0], [-0.01, 0.01, 1.01]],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 37, "intensity": 0.4 }
+    "grain": { "metric": "PGI", "value": 37 }
   },
   "notes": "Long straight midtone, soft shoulder, ~12 stops latitude. Do NOT clip highlights aggressively - favor highlight recovery and low contrast over saturation boosts. EI 320 portrait, EI 400 neutral.",
   "confidence": {

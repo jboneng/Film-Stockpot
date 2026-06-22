@@ -24,6 +24,17 @@
   },
   "pipeline": {
     "tone_curve_8bit": [[0, 0], [32, 16], [96, 108], [192, 222], [255, 248]],
+    "tone_curves_rgb": {
+      "r": [[0, 0], [64, 60], [128, 132], [192, 200], [255, 255]],
+      "g": [[0, 0], [128, 126], [255, 254]],
+      "b": [[0, 8], [64, 66], [128, 122], [192, 184], [255, 244]]
+    },
+    "color_grading": {
+      "comment": "Ektar: cool/blue shadows, slight magenta midtones, vivid clean highlights.",
+      "shadows": [-0.006, 0.0, 0.013],
+      "midtones": [0.004, -0.002, 0.004],
+      "highlights": [0.008, 0.002, -0.004]
+    },
     "white_balance": { "temp_k_bias": -100, "tint": 3, "rgb_gains": [1.01, 1.0, 1.03] },
     "scanner_adjustments": { "highlights": -10, "shadows": -4, "gamma": 1.05, "saturation_pct": 120, "temp_k": -100, "tint": 3 },
     "look": {
@@ -33,7 +44,7 @@
       "color_matrix": [[1.02, -0.01, -0.01], [0.0, 1.02, -0.02], [-0.02, 0.01, 1.05]],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 24, "intensity": 0.15 }
+    "grain": { "metric": "PGI", "value": 24 }
   },
   "notes": "Highest chroma in the set; steepest central curve. Highlights need tighter control than Portra - avoid clipping vivid reds. EI 80 safe, EI 100 box-speed.",
   "confidence": {

@@ -41,7 +41,7 @@
       "color_matrix": null,
       "mono_mixer": [0.30, 0.59, 0.11]
     },
-    "grain": { "metric": "Diffuse RMS", "value": 8, "intensity": 0.28 }
+    "grain": { "metric": "Diffuse RMS", "value": 8 }
   },
   "notes": "High-acutance, finest-grain monochrome anchor for a clean B&W look. Panchromatic mixer before curve/grain; saturation 0; slightly higher local contrast for acutance.",
   "confidence": {
