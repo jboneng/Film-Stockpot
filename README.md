@@ -4,7 +4,7 @@ Apply authentic film-stock looks to flat scans, Fuji Frontier–style.
 
 Film Stockpot is a PyQt6 desktop application for film photographers who scan their
 own negatives. It takes **flat / log 16-bit TIFF exports from
-[NegPy](https://www.negpy.com/)** and grades them back to life: expanding the flat
+[NegPy](https://github.com/marcinz606/NegPy)** and grades them back to life: expanding the flat
 scan to full range, applying a chosen film-stock emulation, and giving you a set of
 familiar Frontier-style operator controls to fine-tune each frame. Edits are
 non-destructive, saved per image, and can be batch-applied across a whole roll.
