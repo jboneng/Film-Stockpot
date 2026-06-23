@@ -433,13 +433,14 @@ uv add --dev <package>    # development
 
 ## Versioning
 
-Film Stockpot uses **major.minor.build** (starting at **0.10.1**). The version is
+Film Stockpot uses **major.minor.build** (starting at **0.1.1**). The version is
 kept in sync in `pyproject.toml` and `src/film_stockpot/__init__.py`.
 
 | Event | What changes |
 |-------|----------------|
-| Push to `main` | Build number increments (`1.0.1` → `1.0.2`) |
-| `release_windows.ps1` after a release | Minor increments, build resets to 1 (`1.0.5` → `1.1.1`) for the next dev cycle |
+| Push to `main` | Build number increments (`0.1.1` → `0.1.2`) |
+| `release_windows.ps1` after a release | Minor increments, build resets to 1 (`0.1.5` → `0.2.1`) for the next dev cycle |
+| Manual (`--major`) | Major increments, minor and build reset (`0.2.3` → `1.0.1`) |
 
 The version in `pyproject.toml` and `src/film_stockpot/__init__.py` is the single
 source of truth. It is shown in the app window title, embedded in the installer
@@ -456,7 +457,7 @@ uv run python scripts/bump_version.py --major
 Set an exact version:
 
 ```bash
-uv run python scripts/bump_version.py --set 1.0.0
+uv run python scripts/bump_version.py --set 0.1.1
 ```
 
 ## Windows release
