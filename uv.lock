@@ -40,7 +40,7 @@ wheels = [
 
 [[package]]
 name = "film-stockpot"
-version = "1.0.2"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "imagecodecs" },
