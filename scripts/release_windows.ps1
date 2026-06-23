@@ -92,14 +92,11 @@ if ($RemoteTag) {
 }
 
 Write-Host "==> Building Windows installer" -ForegroundColor Cyan
-$InstallerPath = & (Join-Path $PSScriptRoot "build_windows.ps1")
-if (-not $InstallerPath -or -not (Test-Path $InstallerPath)) {
-    throw "Installer build did not return a valid path."
-}
+& (Join-Path $PSScriptRoot "build_windows.ps1")
 
-$ExpectedName = "FilmStockPot_x64_$Version.exe"
-if ((Split-Path -Leaf $InstallerPath) -ne $ExpectedName) {
-    throw "Installer name mismatch: expected $ExpectedName, got $InstallerPath"
+$InstallerPath = Join-Path $Root "dist/installer/FilmStockPot_x64_$Version.exe"
+if (-not (Test-Path $InstallerPath)) {
+    throw "Installer was not created at $InstallerPath"
 }
 
 Write-Host "==> Pushing current branch" -ForegroundColor Cyan
