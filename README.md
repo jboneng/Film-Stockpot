@@ -430,3 +430,93 @@ Add a dependency:
 uv add <package>          # runtime
 uv add --dev <package>    # development
 ```
+
+## Versioning
+
+Film Stockpot uses **major.minor.build** (starting at **0.10.1**). The version is
+kept in sync in `pyproject.toml` and `src/film_stockpot/__init__.py`.
+
+| Event | What changes |
+|-------|----------------|
+| Push to `main` | Build number increments (`1.0.1` → `1.0.2`) |
+| `release_windows.ps1` after a release | Minor increments, build resets to 1 (`1.0.5` → `1.1.1`) for the next dev cycle |
+
+The version in `pyproject.toml` and `src/film_stockpot/__init__.py` is the single
+source of truth. It is shown in the app window title, embedded in the installer
+filename (`FilmStockPot_x64_<version>.exe`), and used for the GitHub release tag
+(`v<version>`).
+
+Automation commits use `[skip ci]` so they do not re-trigger the build bump.
+Bump the major version manually when needed:
+
+```bash
+uv run python scripts/bump_version.py --major
+```
+
+Set an exact version:
+
+```bash
+uv run python scripts/bump_version.py --set 1.0.0
+```
+
+## Windows release
+
+Film Stockpot ships as a standalone Windows x64 installer named
+`FilmStockPot_x64_<version>.exe`. The `<version>` is always the same value shown in
+the app title bar and stored in `pyproject.toml`.
+
+### One-command release (recommended)
+
+Prerequisites:
+
+- [uv](https://docs.astral.sh/uv/)
+- [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+- [GitHub CLI](https://cli.github.com/) (`gh auth login`)
+- A clean git checkout on `main` with the version you want to ship already committed
+
+From the project root:
+
+```powershell
+.\scripts\release_windows.cmd
+```
+
+If PowerShell blocks unsigned scripts on your machine, use the `.cmd` wrapper above
+(it runs the script with `-ExecutionPolicy Bypass` for that invocation only). You
+can also run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\release_windows.ps1
+```
+
+This script automatically:
+
+1. Verifies `pyproject.toml` and `__init__.py` versions match (app display version)
+2. Builds `dist/installer/FilmStockPot_x64_<version>.exe`
+3. Tags the current commit as `v<version>` and pushes the tag
+4. Creates a GitHub release with the installer attached
+5. Bumps the minor version for the next development cycle and pushes `main`
+
+Options:
+
+- `-SkipBump` — publish the release without bumping to the next minor version
+- `-Draft` — create a draft GitHub release instead of publishing immediately
+
+### Build installer only
+
+To build without publishing:
+
+```powershell
+.\scripts\build_windows.cmd
+```
+
+Output:
+
+- `dist/FilmStockpot/FilmStockpot.exe` — standalone app folder (PyInstaller)
+- `dist/installer/FilmStockPot_x64_<version>.exe` — Windows installer
+
+Use `-SkipInstaller` to build only the PyInstaller bundle.
+
+### Release from GitHub Actions
+
+The **Release Windows** workflow (`workflow_dispatch`) runs the same
+`release_windows.ps1` script on a Windows runner if you prefer not to build locally.

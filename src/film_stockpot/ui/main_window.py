@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from film_stockpot import __version__
 from film_stockpot.image.folder import list_tiff_files
 from film_stockpot.image.io import array_to_qimage, load_image_array
 from film_stockpot.image.scanner import NEUTRAL, apply_scanner_adjustments
@@ -56,7 +57,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Film Stockpot")
+        self.setWindowTitle(f"Film Stockpot {__version__}")
 
         self._original_rgb: np.ndarray | None = None
         self._preview_original: np.ndarray | None = None

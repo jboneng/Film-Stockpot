@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QApplication
 
 from pathlib import Path
 
+from film_stockpot import __version__
 from film_stockpot.image.scanner import NEUTRAL
 from film_stockpot.ui.main_window import MainWindow
 from film_stockpot.ui.widgets.film_strip import FilmStripPanel
@@ -14,7 +15,7 @@ from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
 
 def test_main_window_creates(qapp: QApplication) -> None:
     window = MainWindow()
-    assert window.windowTitle() == "Film Stockpot"
+    assert window.windowTitle() == f"Film Stockpot {__version__}"
     assert isinstance(window.centralWidget(), ImageViewer)
 
 

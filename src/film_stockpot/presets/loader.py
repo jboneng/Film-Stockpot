@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from film_stockpot import paths
+
 _PRESETS_DIR_NAME = "FilmPresets"
 _INDEX_FILE = "_index.json"
 _BASE_FILE = "_frontier_base.json"
@@ -31,8 +33,15 @@ class PresetGroup:
 
 
 def find_presets_dir() -> Path:
-    """Locate the FilmPresets directory by searching cwd and parents of this file."""
-    candidates = [Path.cwd() / _PRESETS_DIR_NAME]
+    """Locate the FilmPresets directory in frozen builds and source checkouts."""
+    candidates: list[Path] = []
+    if paths.is_frozen():
+        candidates.append(paths.executable_dir() / _PRESETS_DIR_NAME)
+        bundle = paths.meipass_root()
+        if bundle is not None:
+            candidates.append(bundle / _PRESETS_DIR_NAME)
+    candidates.append(Path.cwd() / _PRESETS_DIR_NAME)
+    candidates.append(paths.repo_root() / _PRESETS_DIR_NAME)
     candidates.extend(parent / _PRESETS_DIR_NAME for parent in Path(__file__).resolve().parents)
     for candidate in candidates:
         if candidate.is_dir():

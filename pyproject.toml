@@ -1,6 +1,6 @@
 [project]
 name = "film-stockpot"
-version = "0.1.0"
+version = "1.0.1"
 description = "Apply film-stock looks to flat/log scans, Frontier-style"
 readme = "README.md"
 authors = [
@@ -21,6 +21,7 @@ film-stockpot = "film_stockpot.app:main"
 [dependency-groups]
 dev = [
     "pylint>=3.3",
+    "pyinstaller>=6.0",
     "pytest>=8.0",
 ]
 
