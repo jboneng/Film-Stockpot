@@ -4,25 +4,56 @@
 
 # Film Stockpot
 
-Apply authentic film-stock looks to flat scans, Fuji Frontier–style.
+Film-stock looks and Fuji Frontier–style grading for [NegPy](https://github.com/marcinz606/NegPy) flat 16-bit TIFF exports.
 
-Film Stockpot is a PyQt6 desktop application for film photographers who scan their
-own negatives. It takes **flat / log 16-bit TIFF exports from
-[NegPy](https://github.com/marcinz606/NegPy)** and grades them back to life: expanding the flat
-scan to full range, applying a chosen film-stock emulation, and giving you a set of
-familiar Frontier-style operator controls to fine-tune each frame. Edits are
-non-destructive, saved per image, and can be batch-applied across a whole roll.
+Film Stockpot is a PyQt6 desktop app for exploring **film-stock character** and
+**lab-scanner-style operator controls** on exports from
+[NegPy](https://github.com/marcinz606/NegPy). NegPy handles negative processing,
+scanning, and export; Film Stockpot is an optional companion for grading those
+**flat / log 16-bit TIFFs** — applying stock presets, expanding them to full
+range for preview, and fine-tuning with Frontier-style density, color, and tone
+controls. Edits are non-destructive, saved per image, and can be batch-applied
+across a whole roll.
 
-> **Input expectations:** Film Stockpot is designed around **flat exported images
-> from NegPy in 16-bit TIFF format**. These are inverted, color-corrected but
-> intentionally low-contrast ("flat" / "log") scans. The pipeline de-logs and
-> normalizes them before applying the film look, so feeding it already-graded JPEGs
-> or contrasty scans will not produce the intended result.
+> **Input format:** Film Stockpot expects **flat 16-bit TIFF exports from NegPy**
+> — inverted and color-corrected, but intentionally low-contrast ("flat" / "log")
+> so the grading pipeline has room to work. It is not aimed at already-finished
+> JPEGs or high-contrast positives. See [NegPy → Film Stockpot handoff](#negpy--film-stockpot-handoff) below.
+
+---
+
+## For NegPy users
+
+If you already process negatives in [NegPy](https://github.com/marcinz606/NegPy),
+Film Stockpot is built around the same export workflow: finish your NegPy edit,
+export a **flat 16-bit TIFF**, then explore film-stock presets and Frontier-style
+controls as a separate, non-destructive pass. It is designed to sit **alongside**
+NegPy — not replace it.
+
+| Stage | Tool | Role |
+|-------|------|------|
+| Scan & negative processing | **[NegPy](https://github.com/marcinz606/NegPy)** | Inversion, normalization, editing, export |
+| Film-stock & scanner-style grading | **Film Stockpot** | Optional grading on the flat TIFF export |
+
+Film Stockpot grew out of experiments shared with the NegPy community in
+[Show and tell #287](https://github.com/marcinz606/NegPy/discussions/287). NegPy's
+flat export made it possible to explore film-stock and scanner-style profiles
+without changing the underlying negative work.
+
+**Film Stockpot may interest you if:**
+
+- You export **flat 16-bit TIFFs from NegPy** and want to try different film-stock looks
+- You enjoy **Frontier-style** density, CMY balance, and tone controls as a grading pass
+- You want **JSON presets** you can edit, share, and version-control
+
+**Film Stockpot focuses on grading** — scanning, inversion, and orange-mask handling
+remain NegPy's domain.
 
 ---
 
 ## Table of contents
 
+- [For NegPy users](#for-negpy-users)
 - [Features](#features)
 - [How it works](#how-it-works)
 - [Requirements](#requirements)
@@ -34,14 +65,18 @@ non-destructive, saved per image, and can be batch-applied across a whole roll.
 - [Sidecar files](#sidecar-files)
 - [Project layout](#project-layout)
 - [Development](#development)
+- [Versioning](#versioning)
+- [Windows release](#windows-release)
 - [License](#license)
 
 ---
 
 ## Features
 
-- **Flat-scan aware pipeline** — de-logs and auto-levels NegPy's flat 16-bit TIFF
-  exports before grading, so images don't come out washed out.
+- **NegPy flat TIFF workflow** — built for **flat / log 16-bit TIFF exports from
+  [NegPy](https://github.com/marcinz606/NegPy)**; your export file is never modified.
+- **Flat-scan aware pipeline** — expands the flat export to full range for grading,
+  then applies film-stock character and operator controls on top.
 - **Film-stock emulation** — a library of color and black & white stocks (Kodak
   Portra/Gold/Ektar/Tri-X/T-MAX, Fujicolor, Ilford HP5, HARMAN Phoenix II, and more).
 - **Authentic film character** — per-channel tone-curve crossover, tone-zoned color
@@ -50,10 +85,12 @@ non-destructive, saved per image, and can be batch-applied across a whole roll.
 - **Frontier-style operator controls** — density, gamma, CMY color balance, tone
   (Soft → All Hard), highlight/shadow, saturation, and sharpness, all with live
   preview.
+- **RGB histogram** — live per-channel histogram with linear or logarithmic display.
 - **Film-strip browser** — thumbnail strip of every TIFF in a folder, with badges
   for edited and excluded frames.
 - **Non-destructive editing** — every adjustment is saved to a per-image JSON
-  sidecar; your original TIFF is never modified.
+  sidecar (similar in spirit to NegPy keeping edits as recipes); your TIFF is
+  never modified.
 - **Single and batch export** — export the current frame, or render the entire
   roll to 16-bit TIFF, honoring each image's own saved settings.
 - **Self-contained sidecars** — sidecars embed the full preset and base profile,
@@ -62,8 +99,10 @@ non-destructive, saved per image, and can be batch-applied across a whole roll.
 
 ## How it works
 
-The processing pipeline is intentionally stateless — it always grades from the
-pristine original, so switching presets never stacks edits.
+When you open a NegPy flat export, Film Stockpot grades from that pristine TIFF
+every time — switching presets never stacks edits.
+
+The processing pipeline is intentionally stateless:
 
 1. **Input transform (base profile)** — expands the flat/log scan to full range via
    auto-levels, per-channel **neutralization** (removes residual scan cast), a
@@ -93,7 +132,7 @@ Core dependencies (installed automatically): `numpy`, `pillow`, `tifffile`,
 Clone the repository and sync the environment:
 
 ```bash
-git clone https://github.com/<your-username>/FilmStockpot.git
+git clone https://github.com/jboneng/Film-Stockpot.git
 cd FilmStockpot
 uv sync
 ```
@@ -118,15 +157,27 @@ uv run python -m film_stockpot
 See [RUNNING.md](RUNNING.md) for activating the virtual environment directly and
 other command-line details.
 
-### Typical workflow
+### NegPy → Film Stockpot handoff
 
-1. Export your negatives from **NegPy as flat 16-bit TIFFs** into a folder.
-2. In Film Stockpot, click **Open Folder** and select that folder.
-3. Pick a frame from the film strip on the left.
-4. Choose a **Film Stock** from the dropdown.
-5. Fine-tune with the **Frontier Controls** (density, color balance, tone, etc.).
+1. Finish your edit in **NegPy** (exposure, mask handling, retouching, and so on).
+2. Export as a **flat 16-bit TIFF** into a folder (the same low-contrast export
+   format NegPy uses when you want a neutral starting point for further work).
+3. In Film Stockpot, click **Open Folder** and select that export folder.
+4. Choose a **Film Stock**, adjust **Frontier Controls**, then export graded
+   16-bit TIFFs from the **Export** tab.
+
+Your NegPy export files stay untouched. Film Stockpot stores its own adjustments in
+per-image `.stockpot.json` sidecars next to each TIFF.
+
+### Typical workflow (NegPy export → grade → export)
+
+After the [handoff](#negpy--film-stockpot-handoff) above:
+
+1. Pick a frame from the film strip on the left.
+2. Choose a **Film Stock** from the dropdown.
+3. Fine-tune with the **Frontier Controls** (density, color balance, tone, etc.).
    The preview updates live and your edits are saved automatically.
-6. Switch to the **Export** tab and click **Export Image** for the current frame,
+4. Switch to the **Export** tab and click **Export Image** for the current frame,
    or **Export All** to render the whole roll to 16-bit TIFF.
 
 > Tip: right-click a thumbnail to clear its saved edits or exclude it from batch
@@ -396,6 +447,10 @@ the right-click menu) restores the image to its default flat state.
 ```
 FilmStockpot/
 ├── FilmPresets/              # Film-stock preset JSON + index + base profile
+├── docs/                     # Screenshots and other documentation assets
+├── installer/                # Inno Setup script for the Windows installer
+├── packaging/                # PyInstaller spec and build assets
+├── scripts/                  # Version bump, Windows build, and release scripts
 ├── src/film_stockpot/
 │   ├── app.py                # Application entry point
 │   ├── sidecar.py            # Per-image edit sidecar read/write
@@ -434,7 +489,8 @@ uv add --dev <package>    # development
 ## Versioning
 
 Film Stockpot uses **major.minor.build** (starting at **0.1.1**). The version is
-kept in sync in `pyproject.toml` and `src/film_stockpot/__init__.py`.
+kept in sync in `pyproject.toml`, `src/film_stockpot/__init__.py`, and the
+`film-stockpot` entry in `uv.lock`.
 
 | Event | What changes |
 |-------|----------------|
@@ -447,7 +503,13 @@ source of truth. It is shown in the app window title, embedded in the installer
 filename (`FilmStockPot_x64_<version>.exe`), and used for the GitHub release tag
 (`v<version>`).
 
+When you change the version manually, commit `pyproject.toml`, `__init__.py`, and
+`uv.lock` together so they stay aligned.
+
 Automation commits use `[skip ci]` so they do not re-trigger the build bump.
+Version-pin and post-release commits from the release script include `[skip ci]`
+for the same reason.
+
 Bump the major version manually when needed:
 
 ```bash
@@ -473,6 +535,8 @@ Prerequisites:
 - [uv](https://docs.astral.sh/uv/)
 - [Inno Setup 6](https://jrsoftware.org/isinfo.php)
 - [GitHub CLI](https://cli.github.com/) (`gh auth login`)
+- Branch `main`, clean working tree (no uncommitted changes)
+- Version you want to ship already committed on `main`
 
 Install GitHub CLI on Windows:
 
@@ -485,7 +549,32 @@ After installing, **open a new terminal** so `gh` is on your `PATH`, then run:
 ```powershell
 gh auth login
 ```
-- A clean git checkout on `main` with the version you want to ship already committed
+
+### Before you release
+
+The release script ships whatever version is currently in `pyproject.toml` — it
+does **not** choose the version for you. Pushes to `main` also trigger a CI job
+that bumps the **build** number (e.g. `0.1.3` → `0.1.4`).
+
+Typical flow to ship `0.1.3`:
+
+1. Set the version and commit with `[skip ci]` so CI does not bump it again:
+
+   ```powershell
+   uv run python scripts/bump_version.py --set 0.1.3
+   git add pyproject.toml src/film_stockpot/__init__.py uv.lock
+   git commit -m "chore: set release version to 0.1.3 [skip ci]"
+   git push origin main
+   ```
+
+2. Confirm the version is still `0.1.3`:
+
+   ```powershell
+   uv run python scripts/bump_version.py --print
+   ```
+
+3. Run the release script (see below). After a successful release, `main` moves to
+   the next minor dev version (e.g. `0.2.1`).
 
 From the project root:
 
@@ -531,5 +620,17 @@ Use `-SkipInstaller` to build only the PyInstaller bundle.
 
 ### Release from GitHub Actions
 
-The **Release Windows** workflow (`workflow_dispatch`) runs the same
-`release_windows.ps1` script on a Windows runner if you prefer not to build locally.
+The **Release Windows** workflow (Actions → **Release Windows** → **Run workflow**)
+runs the same `release_windows.ps1` script on a Windows runner if you prefer not
+to build locally. It uses the repository `GITHUB_TOKEN` to create tags and releases.
+
+Use the workflow inputs to create a draft release or skip the post-release minor
+bump. The same version rules apply: commit the version you want to ship on `main`
+before triggering the workflow, and use `[skip ci]` on version-pin commits so CI
+does not bump the build number first.
+
+Local release is usually simpler for a first release or when debugging the build.
+
+## License
+
+Film Stockpot is licensed under the [GNU General Public License v3.0](LICENSE.txt).
