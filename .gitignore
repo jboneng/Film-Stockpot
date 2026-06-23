@@ -8,3 +8,22 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Secrets and local env files
+.env
+.env.*
+
+# Per-image edit sidecars (created next to user TIFFs)
+*.stockpot.json
+
+# Secrets and local environment
+.env
+.env.*
+
+# Per-image edit sidecars (created next to user TIFFs)
+*.stockpot.json
+
+# Secrets and local edit sidecars
+.env
+.env.*
+*.stockpot.json
