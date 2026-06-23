@@ -20,7 +20,35 @@ film-stockpot = "film_stockpot.app:main"
 
 [dependency-groups]
 dev = [
+    "pylint>=3.3",
     "pytest>=8.0",
+]
+
+[tool.pylint.main]
+py-version = "3.12"
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    "broad-exception-caught",
+    "import-error",
+    "invalid-name",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "no-name-in-module",
+    "protected-access",
+    "redefined-outer-name",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-function-args",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-positional-arguments",
+    "unused-argument",
+    "use-implicit-booleaness-not-comparison",
+    "wrong-import-order",
 ]
 
 [tool.pytest.ini_options]

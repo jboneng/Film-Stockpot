@@ -26,7 +26,6 @@ from PyQt6.QtWidgets import (
 
 from film_stockpot.image.folder import list_tiff_files
 from film_stockpot.image.io import array_to_qimage, load_image_array
-from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.scanner import NEUTRAL, apply_scanner_adjustments
 from film_stockpot.presets.loader import load_base, load_grouped_presets
 from film_stockpot.sidecar import (

@@ -82,7 +82,7 @@ def save_image_array(path: str | Path, rgb: np.ndarray, *, bit_depth: int = 16) 
         data = np.ascontiguousarray((clipped * 65535.0 + 0.5).astype(np.uint16))
         tifffile.imwrite(file_path, data, photometric="rgb")
         return
-    elif bit_depth == 8:
+    if bit_depth == 8:
         data = np.ascontiguousarray((clipped * 255.0 + 0.5).astype(np.uint8))
     else:
         raise ValueError(f"Unsupported bit depth: {bit_depth}")
