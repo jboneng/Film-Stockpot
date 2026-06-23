@@ -472,6 +472,18 @@ Prerequisites:
 - [uv](https://docs.astral.sh/uv/)
 - [Inno Setup 6](https://jrsoftware.org/isinfo.php)
 - [GitHub CLI](https://cli.github.com/) (`gh auth login`)
+
+Install GitHub CLI on Windows:
+
+```powershell
+winget install --id GitHub.cli -e
+```
+
+After installing, **open a new terminal** so `gh` is on your `PATH`, then run:
+
+```powershell
+gh auth login
+```
 - A clean git checkout on `main` with the version you want to ship already committed
 
 From the project root:

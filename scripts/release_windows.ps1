@@ -34,6 +34,17 @@ Set-Location $Root
 function Require-Command {
     param([string]$Name)
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+        if ($Name -eq "gh") {
+            throw @"
+Required command not found on PATH: gh (GitHub CLI)
+
+Install it, then open a new terminal:
+  winget install --id GitHub.cli -e
+
+Authenticate:
+  gh auth login
+"@
+        }
         throw "Required command not found on PATH: $Name"
     }
 }
