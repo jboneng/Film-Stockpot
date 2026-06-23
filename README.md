@@ -28,7 +28,7 @@ If you already process negatives in [NegPy](https://github.com/marcinz606/NegPy)
 Film Stockpot is built around the same export workflow: finish your NegPy edit,
 export a **flat 16-bit TIFF**, then explore film-stock presets and Frontier-style
 controls as a separate, non-destructive pass. It is designed to sit **alongside**
-NegPy — not replace it.
+NegPy.
 
 | Stage | Tool | Role |
 |-------|------|------|
