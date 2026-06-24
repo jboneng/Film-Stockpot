@@ -183,6 +183,79 @@ After the [handoff](#negpy--film-stockpot-handoff) above:
 > Tip: right-click a thumbnail to clear its saved edits or exclude it from batch
 > export.
 
+### Command-line export
+
+Launch the GUI with no arguments (same from `uv run`, the installed app, or
+`FilmStockpot.exe`). Use the `export` subcommand for headless batch rendering:
+
+```powershell
+# List preset ids for --stock
+film-stockpot presets list
+
+# Folder: per-image sidecars when present, Portra 400 for the rest
+film-stockpot export .\negpy-flat\ -o .\graded\ --stock kodak_portra_400
+
+# Single file
+film-stockpot export frame.tiff -o frame_graded.tif --stock kodak_gold_200
+
+# Only export from existing sidecars
+film-stockpot export .\roll\ -o .\out\ --use-sidecars
+
+# Shared fallback recipe from a sidecar JSON file
+film-stockpot export .\roll\ -o .\out\ --sidecar template.tiff.stockpot.json
+
+# Frontier adjustments from JSON; skip files that already exist
+film-stockpot export .\roll\ -o .\out\ --stock kodak_portra_400 --adjustments frontier.json
+
+# Overwrite existing outputs
+film-stockpot export .\roll\ -o .\out\ --stock kodak_portra_400 --overwrite
+
+# Machine-readable report for scripts and pipelines
+film-stockpot export .\roll\ -o .\out\ --stock kodak_portra_400 --json --quiet
+```
+
+By default, existing output files are **skipped**. Use `--overwrite` to replace
+them. `--stock` is required unless `--use-sidecars` or `--sidecar` supplies the
+recipe. Run `film-stockpot export --help` for all options.
+
+#### Tool chains and automation
+
+For pipelines that call Film Stockpot before the next step, use **`--json`** so
+**stdout** is a single JSON report and progress stays on **stderr** (unless
+`--quiet` suppresses it).
+
+```powershell
+film-stockpot export .\negpy-flat\ -o .\graded\ --stock kodak_portra_400 --json --quiet
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+# Example: pass exported paths to the next tool
+$report = film-stockpot export .\negpy-flat\ -o .\graded\ --stock kodak_portra_400 --json --quiet | ConvertFrom-Json
+foreach ($path in $report.outputs) { Write-Host "Next step input: $path" }
+```
+
+The JSON report includes:
+
+| Field | Purpose |
+|-------|---------|
+| `status` | `success`, `partial`, `skipped`, `failed`, or `cancelled` |
+| `exit_code` / `exit_name` | Same value the process returns |
+| `outputs` | Absolute paths ready for the next tool (exported + skipped) |
+| `files` | Per-image `source`, `output`, `status`, and optional `error` |
+| `counts` | `total`, `exported`, `skipped`, `failed` |
+| `errors` / `warnings` | Human-readable messages |
+
+**Exit codes** (stable):
+
+| Code | Name | Meaning |
+|------|------|---------|
+| `0` | `ok` | All jobs exported or skipped; no failures |
+| `1` | `runtime_error` | One or more renders failed, or nothing was produced |
+| `2` | `usage_error` | Bad arguments, missing `--stock`, invalid paths |
+| `3` | `no_input` | Folder contained no TIFF files |
+
+In shell pipelines, check **`$LASTEXITCODE`** (PowerShell) or **`$?`** / **`$!`**
+(bash) before passing `outputs` to the next command.
+
 ## Film stock presets
 
 Presets live in the [`FilmPresets/`](FilmPresets) folder as JSON files, organized

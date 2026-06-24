@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-film-stockpot = "film_stockpot.app:main"
+film-stockpot = "film_stockpot.main:main"
 
 [dependency-groups]
 dev = [

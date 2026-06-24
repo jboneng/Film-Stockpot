@@ -8,6 +8,7 @@ import numpy as np
 from PyQt6.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QPixmap
 
+from film_stockpot.export_engine import export_batch
 from film_stockpot.image.io import array_to_qimage, load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.scanner import apply_scanner_adjustments
@@ -150,30 +151,13 @@ class BatchExportWorker(QRunnable):
 
     @pyqtSlot()
     def run(self) -> None:
-        total = len(self._jobs)
-        exported = 0
-        failed = 0
-        errors: list[str] = []
-
-        for index, job in enumerate(self._jobs):
-            if self._cancelled:
-                break
-
-            source = Path(job["path"])
-            self.signals.progress.emit(index, total, source.name)
-            try:
-                rgb = load_image_array(job["path"])
-                preset = job.get("preset")
-                if preset is not None:
-                    rgb = apply_film_preset(rgb, preset, job.get("base"))
-                rgb = apply_scanner_adjustments(rgb, job.get("adjustments"))
-
-                target = self._output_dir / f"{source.stem}_export.tif"
-                save_image_array(target, rgb, bit_depth=self._bit_depth)
-                exported += 1
-            except Exception as error:  # noqa: BLE001 - reported in summary
-                failed += 1
-                errors.append(f"{source.name}: {error}")
-
-        self.signals.progress.emit(total, total, "")
-        self.signals.finished.emit(exported, failed, self._cancelled, errors)
+        result = export_batch(
+            self._jobs,
+            output=self._output_dir,
+            single_input=False,
+            bit_depth=self._bit_depth,
+            overwrite=True,
+            on_progress=lambda done, total, name: self.signals.progress.emit(done, total, name),
+            is_cancelled=lambda: self._cancelled,
+        )
+        self.signals.finished.emit(result.exported, result.failed, result.cancelled, result.errors)

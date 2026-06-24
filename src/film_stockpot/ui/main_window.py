@@ -604,31 +604,15 @@ class MainWindow(QMainWindow):
         Images with a sidecar use its embedded preset/base/adjustments; images
         without one inherit the current preview's film stock and adjustments.
         """
-        current_preset = self._current_preset()
-        current_base = self._active_base if self._active_base is not None else self._base
-        current_adjustments = self._panel.settings()
+        from film_stockpot.export_engine import build_export_jobs
 
-        jobs: list[dict] = []
-        for path in paths:
-            sidecar = read_sidecar(path)
-            if sidecar:
-                jobs.append(
-                    {
-                        "path": path,
-                        "preset": sidecar.get("film_stock"),
-                        "base": sidecar.get("base_profile") or self._base,
-                        "adjustments": sidecar.get("adjustments") or dict(NEUTRAL),
-                    }
-                )
-            else:
-                jobs.append(
-                    {
-                        "path": path,
-                        "preset": current_preset,
-                        "base": current_base,
-                        "adjustments": current_adjustments,
-                    }
-                )
+        jobs, _warnings = build_export_jobs(
+            paths,
+            fallback_preset=self._current_preset(),
+            fallback_base=self._active_base if self._active_base is not None else self._base,
+            fallback_adjustments=self._panel.settings(),
+            sidecar_default_base=self._base,
+        )
         return jobs
 
     def _on_batch_progress(self, dialog: QProgressDialog, done: int, total: int, name: str) -> None:
