@@ -16,7 +16,8 @@ from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
 def test_main_window_creates(qapp: QApplication) -> None:
     window = MainWindow()
     assert window.windowTitle() == f"Film Stockpot {__version__}"
-    assert isinstance(window.centralWidget(), ImageViewer)
+    viewer = window.findChild(ImageViewer)
+    assert viewer is not None
 
 
 def test_scanner_panel_set_settings_round_trips(qapp: QApplication) -> None:
@@ -61,16 +62,13 @@ def test_film_strip_set_files_resets_exclusions(qapp: QApplication, tmp_path: Pa
     assert strip.excluded_paths() == set()
 
 
-def test_image_viewer_scales_image(qapp: QApplication) -> None:
+def test_image_viewer_accepts_image(qapp: QApplication) -> None:
     viewer = ImageViewer()
     viewer.resize(400, 300)
 
-    image = QImage(200, 100, QImage.Format.Format_Grayscale16)
-    image.fill(32768)
-    viewer.set_image(image)
+    image = QImage(200, 100, QImage.Format.Format_RGB888)
+    image.fill(128)
+    viewer.set_single_image(image)
 
-    pixmap = viewer._label.pixmap()
-    assert pixmap is not None
-    assert not pixmap.isNull()
-    assert pixmap.width() <= 400
-    assert pixmap.height() <= 300
+    assert viewer._has_image
+    assert not viewer._before_pixmap.isNull()

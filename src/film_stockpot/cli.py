@@ -17,6 +17,7 @@ from film_stockpot.export_engine import (
     load_adjustments_file,
     load_sidecar_recipe,
 )
+from film_stockpot.export_naming import DEFAULT_TEMPLATE
 from film_stockpot.image.folder import list_tiff_files
 from film_stockpot.image.scanner import NEUTRAL
 from film_stockpot.presets.loader import find_presets_dir, get_preset, load_base, load_grouped_presets
@@ -148,6 +149,7 @@ def _cmd_export(args: argparse.Namespace) -> int:
         output=output_path,
         single_input=single_input,
         overwrite=args.overwrite,
+        name_template=args.name,
         on_progress=on_progress,
     )
 
@@ -264,6 +266,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--overwrite",
         action="store_true",
         help="Replace existing output files (default: skip existing)",
+    )
+    export_parser.add_argument(
+        "--name",
+        metavar="TEMPLATE",
+        default=DEFAULT_TEMPLATE,
+        help=(
+            'Output filename template for folder exports (default: "{original}_export"). '
+            "Tokens: {original}, {preset}, {preset_name}, {roll}, {n}, {n:03}, {date}"
+        ),
     )
     export_parser.add_argument(
         "--strict",

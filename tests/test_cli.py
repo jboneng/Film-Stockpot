@@ -66,3 +66,36 @@ def test_export_with_stock(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
     )
     assert code == EXIT_OK
     assert (out_dir / "frame_export.tif").is_file()
+
+
+def test_export_cli_custom_name_template(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    presets_dir = tmp_path / "FilmPresets"
+    presets_dir.mkdir()
+    (presets_dir / "test_stock.json").write_text(
+        '{"id": "test_stock", "name": "Test", "monochrome": false, "pipeline": {}}',
+        encoding="utf-8",
+    )
+
+    source = tmp_path / "frame.tiff"
+    _write_tiff(source)
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    monkeypatch.chdir(tmp_path)
+    code = main(
+        [
+            "export",
+            str(source),
+            "-o",
+            str(out_dir),
+            "--stock",
+            "test_stock",
+            "--presets-dir",
+            str(presets_dir),
+            "--name",
+            "{original}_{preset}",
+            "-q",
+        ]
+    )
+    assert code == EXIT_OK
+    assert (out_dir / "frame_test_stock.tif").is_file()

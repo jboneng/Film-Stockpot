@@ -9,6 +9,7 @@ from PyQt6.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QPixmap
 
 from film_stockpot.export_engine import export_batch
+from film_stockpot.export_naming import DEFAULT_TEMPLATE
 from film_stockpot.image.io import array_to_qimage, load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.scanner import apply_scanner_adjustments
@@ -138,11 +139,19 @@ class BatchExportWorker(QRunnable):
     cooperative: :meth:`cancel` is checked between jobs.
     """
 
-    def __init__(self, jobs: list[dict], output_dir: str, bit_depth: int = 16) -> None:
+    def __init__(
+        self,
+        jobs: list[dict],
+        output_dir: str,
+        *,
+        bit_depth: int = 16,
+        name_template: str | None = None,
+    ) -> None:
         super().__init__()
         self._jobs = jobs
         self._output_dir = Path(output_dir)
         self._bit_depth = bit_depth
+        self._name_template = name_template
         self._cancelled = False
         self.signals = BatchExportSignals()
 
@@ -157,6 +166,7 @@ class BatchExportWorker(QRunnable):
             single_input=False,
             bit_depth=self._bit_depth,
             overwrite=True,
+            name_template=self._name_template or DEFAULT_TEMPLATE,
             on_progress=lambda done, total, name: self.signals.progress.emit(done, total, name),
             is_cancelled=lambda: self._cancelled,
         )

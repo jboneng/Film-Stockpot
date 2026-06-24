@@ -5,11 +5,19 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 from film_stockpot.image.io import load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.scanner import NEUTRAL, apply_scanner_adjustments
+from film_stockpot.export_naming import (
+    DEFAULT_TEMPLATE,
+    OUTPUT_EXTENSION,
+    ExportNamingContext,
+    disambiguate_stem,
+    render_export_name,
+)
 from film_stockpot.sidecar import read_sidecar
 
 ExportJob = dict
@@ -115,13 +123,25 @@ def resolve_output_path(
     output: Path,
     *,
     single_input: bool,
+    name_template: str = DEFAULT_TEMPLATE,
+    naming_context: ExportNamingContext | None = None,
+    used_names: set[str] | None = None,
 ) -> Path:
     """Return the destination path for one exported TIFF."""
     if single_input and output.suffix.lower() in {".tif", ".tiff"}:
         return output
     if output.suffix.lower() in {".tif", ".tiff"}:
         return output
-    return output / f"{source.stem}_export.tif"
+
+    context = naming_context or ExportNamingContext.from_job(
+        {"path": str(source), "preset": None},
+        index=1,
+        total=1,
+    )
+    stem = render_export_name(name_template, context)
+    if used_names is not None:
+        stem = disambiguate_stem(stem, used_names)
+    return output / f"{stem}{OUTPUT_EXTENSION}"
 
 
 def render_job_to_path(job: ExportJob, target: Path, *, bit_depth: int = 16) -> None:
@@ -142,6 +162,7 @@ def export_batch(
     single_input: bool,
     bit_depth: int = 16,
     overwrite: bool = False,
+    name_template: str = DEFAULT_TEMPLATE,
     on_progress: Callable[[int, int, str], None] | None = None,
     is_cancelled: Callable[[], bool] | None = None,
 ) -> ExportBatchResult:
@@ -149,6 +170,8 @@ def export_batch(
     result = ExportBatchResult()
     total = len(jobs)
     cancelled = is_cancelled or (lambda: False)
+    used_names: set[str] = set()
+    exported_at = datetime.now(timezone.utc)
 
     for index, job in enumerate(jobs):
         if cancelled():
@@ -159,7 +182,19 @@ def export_batch(
         if on_progress is not None:
             on_progress(index, total, source.name)
 
-        target = resolve_output_path(source, output, single_input=single_input)
+        target = resolve_output_path(
+            source,
+            output,
+            single_input=single_input,
+            name_template=name_template,
+            naming_context=ExportNamingContext.from_job(
+                job,
+                index=index + 1,
+                total=total,
+                exported_at=exported_at,
+            ),
+            used_names=used_names,
+        )
         if target.is_file() and not overwrite:
             result.skipped += 1
             result.files.append(

@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QProgressDialog,
     QPushButton,
@@ -25,9 +26,10 @@ from PyQt6.QtWidgets import (
 )
 
 from film_stockpot import __version__
+from film_stockpot.export_naming import ExportNamingContext, render_export_name
 from film_stockpot.image.folder import list_tiff_files
 from film_stockpot.image.io import array_to_qimage, load_image_array
-from film_stockpot.image.scanner import NEUTRAL, apply_scanner_adjustments
+from film_stockpot.image.scanner import NEUTRAL
 from film_stockpot.presets.loader import load_base, load_grouped_presets
 from film_stockpot.sidecar import (
     delete_sidecar,
@@ -35,12 +37,15 @@ from film_stockpot.sidecar import (
     read_sidecar,
     write_sidecar,
 )
+from film_stockpot.ui.preview_stages import PreviewStage, compute_base_graded, compute_full_graded
+from film_stockpot.ui.recent_folders import last_folder, load_recent_folders, remember_folder
 from film_stockpot.ui.icons import load_icon
 from film_stockpot.ui.widgets.busy_overlay import BusyOverlay
 from film_stockpot.ui.widgets.export_panel import FORMAT_TIFF_16BIT, ExportPanel
 from film_stockpot.ui.widgets.film_strip import FilmStripPanel
 from film_stockpot.ui.widgets.histogram import HistogramWidget
 from film_stockpot.ui.widgets.image_viewer import ImageViewer
+from film_stockpot.ui.widgets.preview_mode_bar import PreviewModeBar
 from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
 from film_stockpot.ui.workers import ApplyPresetWorker, BatchExportWorker, ExportOneWorker
 
@@ -61,6 +66,7 @@ class MainWindow(QMainWindow):
 
         self._original_rgb: np.ndarray | None = None
         self._preview_original: np.ndarray | None = None
+        self._preview_base_graded: np.ndarray | None = None
         self._current_path: str | None = None
         self._adjust_base: np.ndarray | None = None
         self._preview_base: np.ndarray | None = None
@@ -78,7 +84,19 @@ class MainWindow(QMainWindow):
             self._base = None
 
         self._viewer = ImageViewer(self)
-        self.setCentralWidget(self._viewer)
+        self._preview_bar = PreviewModeBar(self)
+        self._preview_bar.changed.connect(self._refresh_preview_view)
+        self._preview_bar.fit_requested.connect(self._viewer.fit_in_view)
+        self._preview_bar.actual_size_requested.connect(self._viewer.zoom_to_actual_size)
+        self._viewer.split_ratio_changed.connect(self._preview_bar.set_split_ratio)
+
+        preview_container = QWidget(self)
+        preview_layout = QVBoxLayout(preview_container)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        preview_layout.setSpacing(0)
+        preview_layout.addWidget(self._preview_bar)
+        preview_layout.addWidget(self._viewer, 1)
+        self.setCentralWidget(preview_container)
 
         self._busy = BusyOverlay(self)
 
@@ -99,6 +117,7 @@ class MainWindow(QMainWindow):
         self._build_panel()
         self._populate_presets()
         self._update_actions_enabled()
+        self._try_restore_last_folder()
 
     def _build_toolbar(self) -> None:
         toolbar = QToolBar("Main", self)
@@ -109,8 +128,15 @@ class MainWindow(QMainWindow):
         open_icon = load_icon("folder.svg", 20)
         self._open_action = QAction(open_icon, "Open Folder", self)
         self._open_action.setToolTip("Open a folder of TIFF images")
+        self._open_menu = QMenu(self)
+        browse_action = self._open_menu.addAction("Browse for folder...")
+        browse_action.triggered.connect(self._open_folder)
+        self._open_menu.addSeparator()
+        self._recent_menu = self._open_menu.addMenu("Recent folders")
+        self._open_action.setMenu(self._open_menu)
         self._open_action.triggered.connect(self._open_folder)
         toolbar.addAction(self._open_action)
+        self._refresh_recent_menu()
 
         toolbar.addSeparator()
 
@@ -164,6 +190,9 @@ class MainWindow(QMainWindow):
         self._export_panel = ExportPanel(self)
         self._export_panel.set_export_callback(self._export_image)
         self._export_panel.set_export_all_callback(self._export_all)
+        self._export_panel.set_copy_all_callback(lambda: self._copy_settings_to_roll(only_unedited=False))
+        self._export_panel.set_copy_unedited_callback(lambda: self._copy_settings_to_roll(only_unedited=True))
+        self._export_panel.name_template_changed.connect(self._update_export_name_preview)
 
         tabs = QTabWidget(self)
         tabs.setMinimumWidth(280)
@@ -266,15 +295,21 @@ class MainWindow(QMainWindow):
         self._combo.blockSignals(False)
 
     def _open_folder(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Open Folder")
+        start_dir = last_folder() or ""
+        folder = QFileDialog.getExistingDirectory(self, "Open Folder", start_dir)
         if not folder:
             return
+        self._open_folder_at(folder)
 
+    def _open_folder_at(self, folder: str) -> None:
         try:
             paths = list_tiff_files(folder)
         except OSError as error:
             QMessageBox.critical(self, "Unable to Open Folder", f"Could not read the folder.\n\n{error}")
             return
+
+        remember_folder(folder)
+        self._refresh_recent_menu()
 
         folder_path = Path(folder)
         self._folder_label.setText(folder_path.name or str(folder_path))
@@ -290,6 +325,25 @@ class MainWindow(QMainWindow):
                 "No Images Found",
                 "No TIFF images were found in the selected folder.",
             )
+
+    def _refresh_recent_menu(self) -> None:
+        self._recent_menu.clear()
+        recent = load_recent_folders()
+        if not recent:
+            empty = self._recent_menu.addAction("(none)")
+            empty.setEnabled(False)
+            return
+        for folder in recent:
+            path = Path(folder)
+            label = path.name or str(path)
+            action = self._recent_menu.addAction(label)
+            action.setToolTip(folder)
+            action.triggered.connect(lambda _checked=False, target=folder: self._open_folder_at(target))
+
+    def _try_restore_last_folder(self) -> None:
+        folder = last_folder()
+        if folder and Path(folder).is_dir():
+            self._open_folder_at(folder)
 
     def _load_image_from_path(self, path: str) -> None:
         # Persist any pending edits for the image we are leaving, otherwise the
@@ -320,6 +374,19 @@ class MainWindow(QMainWindow):
         else:
             self._restore_defaults()
         self._update_actions_enabled()
+        self._update_export_name_preview()
+
+    def _update_export_name_preview(self, _template: str | None = None) -> None:
+        if self._current_path is None:
+            self._export_panel.refresh_builtin_preview()
+            return
+        context = ExportNamingContext.from_job(
+            {"path": self._current_path, "preset": self._current_preset()},
+            index=self._film_strip.current_index(),
+            total=max(1, len(self._film_strip.paths())),
+        )
+        stem = render_export_name(self._export_panel.name_template(), context)
+        self._export_panel.set_name_preview(stem)
 
     def _flush_pending_sidecar(self) -> None:
         """Immediately save a queued sidecar for the current image, if any.
@@ -349,6 +416,7 @@ class MainWindow(QMainWindow):
 
         self._active_base = base
         self._render_preset(preset, base)
+        self._update_export_name_preview()
 
     def _restore_defaults(self) -> None:
         self._restoring = True
@@ -358,6 +426,7 @@ class MainWindow(QMainWindow):
 
         self._active_base = self._base
         self._render_preset(None, self._base)
+        self._update_export_name_preview()
 
     def _schedule_preset_apply(self) -> None:
         self._preset_timer.start(self._PRESET_DEBOUNCE_MS)
@@ -368,6 +437,7 @@ class MainWindow(QMainWindow):
         self._active_base = self._base
         self._render_preset(self._current_preset(), self._base)
         self._schedule_sidecar_save()
+        self._update_export_name_preview()
 
     def _downscale_for_preview(self, rgb: np.ndarray) -> np.ndarray:
         """Return a copy no larger than ``_PREVIEW_MAX`` on its longest edge."""
@@ -469,6 +539,7 @@ class MainWindow(QMainWindow):
     def _build_preview(self) -> None:
         if self._adjust_base is None:
             self._preview_base = None
+            self._preview_base_graded = None
             return
         height, width = self._adjust_base.shape[:2]
         longest = max(height, width)
@@ -478,6 +549,47 @@ class MainWindow(QMainWindow):
         else:
             self._preview_base = self._adjust_base
 
+        if self._preview_original is not None:
+            self._preview_base_graded = compute_base_graded(
+                self._preview_original,
+                self._active_base if self._active_base is not None else self._base,
+            )
+        else:
+            self._preview_base_graded = None
+
+    def _stage_array(self, stage: PreviewStage) -> np.ndarray | None:
+        if stage is PreviewStage.FLAT:
+            return self._preview_original
+        if stage is PreviewStage.BASE:
+            return self._preview_base_graded
+        if stage is PreviewStage.FILM:
+            return self._preview_base
+        if stage is PreviewStage.FULL:
+            if self._preview_base is None:
+                return None
+            return compute_full_graded(self._preview_base, self._panel.settings())
+        return None
+
+    def _refresh_preview_view(self) -> None:
+        if self._preview_bar.split_enabled():
+            before = self._stage_array(self._preview_bar.before_stage())
+            after = self._stage_array(self._preview_bar.after_stage())
+            if before is None or after is None:
+                self._viewer.clear_image()
+                return
+            self._viewer.set_split_images(
+                array_to_qimage(before),
+                array_to_qimage(after),
+                ratio=self._preview_bar.split_ratio(),
+            )
+            return
+
+        image = self._stage_array(self._preview_bar.view_stage())
+        if image is None:
+            self._viewer.clear_image()
+            return
+        self._viewer.set_single_image(array_to_qimage(image))
+
     def _schedule_live_update(self) -> None:
         self._live_timer.start(self._LIVE_DEBOUNCE_MS)
         self._schedule_sidecar_save()
@@ -485,10 +597,61 @@ class MainWindow(QMainWindow):
     def _update_live(self) -> None:
         if self._preview_base is None:
             self._histogram.clear()
+            self._refresh_preview_view()
             return
-        adjusted = apply_scanner_adjustments(self._preview_base, self._panel.settings())
-        self._viewer.set_image(array_to_qimage(adjusted))
-        self._histogram.set_image(adjusted)
+        full = compute_full_graded(self._preview_base, self._panel.settings())
+        self._histogram.set_image(full)
+        self._refresh_preview_view()
+
+    def _copy_settings_to_roll(self, *, only_unedited: bool) -> None:
+        paths = self._film_strip.paths()
+        if not paths or self._original_rgb is None:
+            QMessageBox.information(
+                self,
+                "Nothing to Copy",
+                "Open a folder and select settings before copying to the roll.",
+            )
+            return
+
+        preset = self._current_preset()
+        base = self._active_base if self._active_base is not None else self._base
+        adjustments = self._panel.settings()
+        targets = [path for path in paths if not only_unedited or not has_sidecar(path)]
+        if not targets:
+            QMessageBox.information(
+                self,
+                "Nothing to Copy",
+                "Every image in the roll already has a sidecar file.",
+            )
+            return
+
+        copied = 0
+        errors: list[str] = []
+        for path in targets:
+            try:
+                write_sidecar(path, preset=preset, base=base, adjustments=adjustments)
+                self._film_strip.set_edited(path, True)
+                copied += 1
+            except OSError as error:
+                errors.append(f"{Path(path).name}: {error}")
+
+        if errors:
+            detail = "\n".join(errors[:10])
+            if len(errors) > 10:
+                detail += f"\n... and {len(errors) - 10} more."
+            QMessageBox.warning(
+                self,
+                "Copy Finished With Errors",
+                f"Copied settings to {copied} image(s), {len(errors)} failed.\n\n{detail}",
+            )
+            return
+
+        scope = "unedited image(s)" if only_unedited else "image(s)"
+        QMessageBox.information(
+            self,
+            "Settings Copied",
+            f"Current settings copied to {copied} {scope} in the roll.",
+        )
 
     def _export_image(self) -> None:
         if self._original_rgb is None or self._exporting_single:
@@ -539,10 +702,15 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "Unable to Export Image", f"Could not save the image.\n\n{message}")
 
     def _default_export_name(self) -> str:
-        if self._current_path:
-            source = Path(self._current_path)
-            return f"{source.stem}_export.tif"
-        return "export.tif"
+        if not self._current_path:
+            return "export.tif"
+        context = ExportNamingContext.from_job(
+            {"path": self._current_path, "preset": self._current_preset()},
+            index=self._film_strip.current_index(),
+            total=max(1, len(self._film_strip.paths())),
+        )
+        stem = render_export_name(self._export_panel.name_template(), context)
+        return f"{stem}.tif"
 
     def _export_all(self) -> None:
         if self._batch_worker is not None:
@@ -585,7 +753,11 @@ class MainWindow(QMainWindow):
         dialog.setAutoReset(False)
         dialog.setValue(0)
 
-        worker = BatchExportWorker(jobs, output_dir)
+        worker = BatchExportWorker(
+            jobs,
+            output_dir,
+            name_template=self._export_panel.name_template(),
+        )
         self._batch_worker = worker
         dialog.canceled.connect(worker.cancel)
         worker.signals.progress.connect(
@@ -668,6 +840,7 @@ class MainWindow(QMainWindow):
         else:
             self._busy.hide()
         self._update_actions_enabled(busy)
+        self._preview_bar.setEnabled(not busy)
 
     def _update_actions_enabled(self, busy: bool = False) -> None:
         has_image = self._original_rgb is not None

@@ -153,6 +153,14 @@ def _apply_input_transform(image: np.ndarray, transform: dict | None) -> np.ndar
     return np.clip(result, 0.0, 1.0)
 
 
+def apply_base_input_transform(rgb: np.ndarray, base: dict | None) -> np.ndarray:
+    """Apply only the shared base ``input_transform`` stage (no film-stock look)."""
+    image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
+    if base:
+        image = _apply_input_transform(image, base.get("input_transform"))
+    return image.astype(np.float32, copy=False)
+
+
 def _neutralize(image: np.ndarray, strength: float) -> np.ndarray:
     """Align per-channel medians toward a common gray, removing residual cast."""
     if strength <= 0.0 or image.ndim != 3 or image.shape[2] < 3:

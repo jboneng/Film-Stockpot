@@ -177,6 +177,11 @@ class FilmStripPanel(QWidget):
             for index in range(self._list.count())
         ]
 
+    def current_index(self) -> int:
+        """Return the 1-based index of the selected frame, or 1 if none."""
+        row = self._list.currentRow()
+        return row + 1 if row >= 0 else 1
+
     def set_edited(self, path: str, edited: bool) -> None:
         """Toggle the 'edited' badge for the item matching ``path``."""
         if edited:
