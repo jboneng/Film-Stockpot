@@ -59,6 +59,10 @@ remain NegPy's domain.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Preview and compare](#preview-and-compare)
+  - [Export naming](#export-naming)
+  - [Roll workflow](#roll-workflow)
+  - [Command-line export](#command-line-export)
 - [Film stock presets](#film-stock-presets)
 - [Creating and editing film presets](#creating-and-editing-film-presets)
 - [Tuning the Frontier base profile](#tuning-the-frontier-base-profile)
@@ -78,7 +82,7 @@ remain NegPy's domain.
 - **Flat-scan aware pipeline** — expands the flat export to full range for grading,
   then applies film-stock character and operator controls on top.
 - **Film-stock emulation** — a library of color and black & white stocks (Kodak
-  Portra/Gold/Ektar/Tri-X/T-MAX, Fujicolor, Ilford HP5, HARMAN Phoenix II, and more).
+  Portra/Gold/Ektar/Tri-X/T-MAX, Fujicolor, Ilford HP5/Delta 3200, HARMAN Phoenix II, and more).
 - **Authentic film character** — per-channel tone-curve crossover, tone-zoned color
   grading, halation bloom, and grain recovered from the scan itself — never
   synthetic noise.
@@ -86,13 +90,27 @@ remain NegPy's domain.
   (Soft → All Hard), highlight/shadow, saturation, and sharpness, all with live
   preview.
 - **RGB histogram** — live per-channel histogram with linear or logarithmic display.
+- **Pipeline preview stages** — inspect any step of the grading chain: flat scan,
+  base graded, film stock only, or film plus Frontier adjustments.
+- **Split compare** — drag a before/after divider in the preview to compare two
+  pipeline stages side by side (e.g. flat vs. final grade).
+- **Interactive preview** — pan, zoom, **Fit**, and **100%** (1:1 pixel) viewing;
+  double-click the preview to fit the image to the window.
 - **Film-strip browser** — thumbnail strip of every TIFF in a folder, with badges
   for edited and excluded frames.
+- **Recent folders** — reopen the last ten export folders from the **Open** menu.
 - **Non-destructive editing** — every adjustment is saved to a per-image JSON
   sidecar (similar in spirit to NegPy keeping edits as recipes); your TIFF is
   never modified.
 - **Single and batch export** — export the current frame, or render the entire
   roll to 16-bit TIFF, honoring each image's own saved settings.
+- **Export naming templates** — built-in filename patterns (or custom tokens) for
+  batch exports; the same templates work in the GUI and CLI.
+- **Roll settings copy** — copy the current film stock and Frontier adjustments to
+  every frame, or only to images that do not yet have a sidecar.
+- **Headless CLI** — batch-export folders or single files from the terminal with
+  sidecar-aware recipes, progress output, JSON reports, and stable exit codes for
+  automation pipelines.
 - **Self-contained sidecars** — sidecars embed the full preset and base profile,
   so a TIFF + sidecar renders identically on another machine even if that stock
   isn't installed there.
@@ -182,6 +200,57 @@ After the [handoff](#negpy--film-stockpot-handoff) above:
 
 > Tip: right-click a thumbnail to clear its saved edits or exclude it from batch
 > export.
+
+### Preview and compare
+
+Above the main preview, the **View** bar lets you inspect the grading pipeline at
+different stages:
+
+| Stage | What you see |
+|-------|----------------|
+| **Flat** | The raw NegPy flat export |
+| **Base graded** | After the shared Frontier base input transform (de-log, neutralize, etc.) |
+| **Film stock** | Base graded + film-stock look (no operator sliders) |
+| **Film + adjustments** | Full grade including your Frontier Controls |
+
+Enable **Split compare** to show two stages at once with a draggable divider. Pick
+**Before** and **After** stages, drag the divider in the preview (or use the
+slider), and use **Fit** / **100%** to zoom. Double-click the preview to fit the
+image to the window.
+
+### Export naming
+
+On the **Export** tab, the **Naming** section controls how batch exports are
+named. Choose a built-in pattern or enter a custom template. Tokens:
+
+| Token | Value |
+|-------|--------|
+| `{original}` | Source filename (without extension) |
+| `{preset}` | Film-stock preset id |
+| `{preset_name}` | Film-stock display name |
+| `{roll}` | Parent folder name |
+| `{n}` / `{n:03}` | Frame index in the batch (optional zero-padding) |
+| `{date}` | Export date (`YYYYMMDD`) |
+
+The live example below the template shows what a rendered filename will look like.
+Your choice is remembered between sessions. The same tokens apply to CLI batch
+export via `--name` (see [Command-line export](#command-line-export)).
+
+Built-in presets include `{original}_export`, `{original}`, `{original}_{preset}`,
+and `{roll}_{n:03}_{original}`.
+
+### Roll workflow
+
+When every frame on a roll should share the same look:
+
+1. Grade one representative frame (film stock + Frontier Controls).
+2. On the **Export** tab, click **Copy Settings to All** to write sidecars for
+   every image, or **Copy to Unedited Only** to leave frames that already have
+   their own edits untouched.
+3. Fine-tune individual frames if needed, then **Export All**.
+
+Use **Recent folders** under the toolbar **Open** menu to jump back to a roll you
+were working on.
 
 ### Command-line export
 
@@ -526,6 +595,9 @@ FilmStockpot/
 ├── scripts/                  # Version bump, Windows build, and release scripts
 ├── src/film_stockpot/
 │   ├── app.py                # Application entry point
+│   ├── cli.py                # Headless export and presets subcommands
+│   ├── export_engine.py      # Shared batch export logic (GUI + CLI)
+│   ├── export_naming.py      # Export filename templates
 │   ├── sidecar.py            # Per-image edit sidecar read/write
 │   ├── image/
 │   │   ├── io.py             # Load/save 16-bit TIFF ↔ float32 RGB
@@ -535,6 +607,9 @@ FilmStockpot/
 │   │   └── folder.py         # TIFF discovery
 │   ├── presets/loader.py     # Preset and base-profile loading
 │   └── ui/                   # PyQt6 main window, panels, widgets, workers
+│       ├── preview_stages.py # Pipeline stage labels and preview helpers
+│       ├── recent_folders.py # Recently opened folder persistence
+│       └── widgets/          # Film strip, viewer, export panel, etc.
 └── tests/                    # Pytest suite
 ```
 
