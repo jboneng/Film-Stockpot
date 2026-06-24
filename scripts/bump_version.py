@@ -66,6 +66,10 @@ def _read_init_version() -> str | None:
 
 def verify_version_sync() -> str:
     """Return the current version after verifying pyproject.toml and __init__.py match."""
+    init_text = _INIT.read_text(encoding="utf-8")
+    if "<<<<<<<" in init_text or ">>>>>>>" in init_text:
+        raise SystemExit(f"Unresolved merge conflict markers in {_INIT}")
+
     version = _format_version(*_read_pyproject_version())
     init_version = _read_init_version()
     if init_version != version:
