@@ -12,7 +12,7 @@ def test_load_grouped_presets_returns_all_stocks() -> None:
     total = sum(len(group.presets) for group in groups)
 
     assert len(groups) >= 1
-    assert total == 19
+    assert total == 20
 
 
 def test_every_preset_has_a_pipeline() -> None:
@@ -24,3 +24,11 @@ def test_every_preset_has_a_pipeline() -> None:
 def test_get_preset_by_id() -> None:
     preset = get_preset("kodak_portra_400")
     assert preset.name == "Kodak Portra 400"
+
+
+def test_get_ilford_delta_3200() -> None:
+    preset = get_preset("ilford_delta_3200")
+    assert preset.name == "Ilford Delta 3200"
+    assert preset.data["monochrome"] is True
+    assert preset.data["film"]["base_iso"] == 1000
+    assert preset.data["film"]["recommended_ei"] == 3200

@@ -59,6 +59,7 @@
       "label": "Black & white",
       "presets": [
         { "id": "ilford_hp5_plus", "name": "Ilford HP5 Plus", "file": "ilford_hp5_plus.json" },
+        { "id": "ilford_delta_3200", "name": "Ilford Delta 3200", "file": "ilford_delta_3200.json" },
         { "id": "kodak_trix_400", "name": "Kodak Tri-X 400", "file": "kodak_trix_400.json" },
         { "id": "kodak_tmax_400", "name": "Kodak T-MAX 400", "file": "kodak_tmax_400.json" },
         { "id": "kodak_tmax_100", "name": "Kodak T-MAX 100", "file": "kodak_tmax_100.json" }
