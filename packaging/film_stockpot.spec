@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 block_cipher = None
 
@@ -11,22 +11,67 @@ root = Path(SPECPATH).parent
 src = root / "src"
 entry = src / "film_stockpot" / "__main__.py"
 
-pyqt_datas, pyqt_binaries, pyqt_hiddenimports = collect_all("PyQt6")
+# Do not collect_all("PyQt6"): it pulls every optional Qt module/DLL and can
+# mismatch PyQt6 bindings with the bundled Qt6 runtime on Windows.
 img_datas, img_binaries, img_hiddenimports = collect_all("imagecodecs")
 
 datas = [
     (str(root / "FilmPresets"), "FilmPresets"),
     (str(src / "film_stockpot" / "assets"), "film_stockpot/assets"),
 ]
-datas += pyqt_datas + img_datas
+datas += img_datas
 
-binaries = pyqt_binaries + img_binaries
+binaries = img_binaries
 
 hiddenimports = [
+    "PyQt6.QtCore",
+    "PyQt6.QtGui",
+    "PyQt6.QtWidgets",
     "PyQt6.QtSvg",
     "PyQt6.sip",
 ]
-hiddenimports += pyqt_hiddenimports + img_hiddenimports
+hiddenimports += img_hiddenimports
+
+# Unused PyQt6 modules should stay out of the bundle.
+_pyqt6_excludes = [
+    f"PyQt6.{name}"
+    for name in (
+        "QAxContainer",
+        "QtBluetooth",
+        "QtDBus",
+        "QtDesigner",
+        "QtHelp",
+        "QtMultimedia",
+        "QtMultimediaWidgets",
+        "QtNfc",
+        "QtOpenGL",
+        "QtOpenGLWidgets",
+        "QtPdf",
+        "QtPdfWidgets",
+        "QtPositioning",
+        "QtPrintSupport",
+        "QtQml",
+        "QtQuick",
+        "QtQuick3D",
+        "QtQuickWidgets",
+        "QtRemoteObjects",
+        "QtSensors",
+        "QtSerialPort",
+        "QtSpatialAudio",
+        "QtSql",
+        "QtStateMachine",
+        "QtSvgWidgets",
+        "QtTest",
+        "QtTextToSpeech",
+        "QtWebChannel",
+        "QtWebEngineCore",
+        "QtWebEngineQuick",
+        "QtWebEngineWidgets",
+        "QtWebSockets",
+        "QtXml",
+        "uic",
+    )
+]
 
 a = Analysis(
     [str(entry)],
@@ -37,7 +82,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=_pyqt6_excludes,
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
@@ -55,7 +100,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -71,7 +116,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name="FilmStockpot",
 )
