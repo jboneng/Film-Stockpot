@@ -23,7 +23,8 @@
 #>
 param(
     [switch]$SkipBump,
-    [switch]$Draft
+    [switch]$Draft,
+    [string]$NotesFile = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -107,12 +108,25 @@ git tag -a $Tag -m "Film Stockpot $Version"
 git push origin $Tag
 
 Write-Host "==> Publishing GitHub release $Tag" -ForegroundColor Cyan
+$NotesPath = $NotesFile
+if (-not $NotesPath) {
+    $DefaultNotes = Join-Path $Root "scripts/release_notes/v$Version.md"
+    if (Test-Path $DefaultNotes) {
+        $NotesPath = $DefaultNotes
+    }
+}
+
 $ReleaseArgs = @(
     "release", "create", $Tag,
-    "--title", "Film Stockpot $Version",
-    "--notes", "Windows x64 installer for Film Stockpot $Version.",
-    $InstallerPath
+    "--title", "Film Stockpot $Version"
 )
+if ($NotesPath) {
+    Write-Host "    Release notes: $NotesPath" -ForegroundColor Green
+    $ReleaseArgs += @("--notes-file", $NotesPath)
+} else {
+    $ReleaseArgs += @("--notes", "Windows x64 installer for Film Stockpot $Version.")
+}
+$ReleaseArgs += $InstallerPath
 if ($Draft) {
     $ReleaseArgs += "--draft"
 }
