@@ -61,6 +61,25 @@ if (Test-Path $TargetPresets) {
 }
 Copy-Item -Recurse -Force (Join-Path $Root "FilmPresets") $TargetPresets
 
+Write-Host "==> Smoke-testing bundled executable" -ForegroundColor Cyan
+$ExePath = Join-Path $Root "dist/FilmStockpot/FilmStockpot.exe"
+if (-not (Test-Path $ExePath)) {
+    throw "Bundled executable was not created at $ExePath"
+}
+$SavedPath = $env:PATH
+$env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
+try {
+    $Proc = Start-Process -FilePath $ExePath -PassThru -WorkingDirectory (Split-Path $ExePath)
+    Start-Sleep -Seconds 5
+    if ($Proc.HasExited) {
+        throw "FilmStockpot.exe exited immediately with code $($Proc.ExitCode). Qt/DLL startup failed."
+    }
+    Stop-Process -Id $Proc.Id -Force
+    Write-Host "    Smoke test passed" -ForegroundColor Green
+} finally {
+    $env:PATH = $SavedPath
+}
+
 if ($SkipInstaller) {
     Write-Host "Skipping Inno Setup (--SkipInstaller)." -ForegroundColor Yellow
     Write-Host "Bundle: dist/FilmStockpot/FilmStockpot.exe" -ForegroundColor Green

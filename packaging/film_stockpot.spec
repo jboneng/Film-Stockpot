@@ -3,7 +3,8 @@
 
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_all, collect_submodules
+from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks.qt import pyqt6_library_info
 
 block_cipher = None
 
@@ -11,8 +12,6 @@ root = Path(SPECPATH).parent
 src = root / "src"
 entry = src / "film_stockpot" / "__main__.py"
 
-# Do not collect_all("PyQt6"): it pulls every optional Qt module/DLL and can
-# mismatch PyQt6 bindings with the bundled Qt6 runtime on Windows.
 img_datas, img_binaries, img_hiddenimports = collect_all("imagecodecs")
 
 datas = [
@@ -21,7 +20,8 @@ datas = [
 ]
 datas += img_datas
 
-binaries = img_binaries
+binaries = list(img_binaries)
+binaries += pyqt6_library_info.collect_extra_binaries()
 
 hiddenimports = [
     "PyQt6.QtCore",
@@ -32,7 +32,12 @@ hiddenimports = [
 ]
 hiddenimports += img_hiddenimports
 
-# Unused PyQt6 modules should stay out of the bundle.
+for _qt_module in ("PyQt6.QtCore", "PyQt6.QtGui", "PyQt6.QtWidgets", "PyQt6.QtSvg"):
+    mod_hidden, mod_bins, mod_datas = pyqt6_library_info.collect_module(_qt_module)
+    hiddenimports += mod_hidden
+    binaries += mod_bins
+    datas += mod_datas
+
 _pyqt6_excludes = [
     f"PyQt6.{name}"
     for name in (
@@ -73,6 +78,8 @@ _pyqt6_excludes = [
     )
 ]
 
+runtime_hooks = [str(root / "packaging" / "pyqt6_bootstrap.py")]
+
 a = Analysis(
     [str(entry)],
     pathex=[str(src)],
@@ -81,7 +88,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=runtime_hooks,
     excludes=_pyqt6_excludes,
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
