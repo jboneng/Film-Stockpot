@@ -141,6 +141,25 @@
       "gamma_delta": 0.009,
       "grain_strength_mult": 0.791,
       "lift_delta": 0.0023
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0564,
+          -0.0261
+        ],
+        [
+          -0.058,
+          1.0,
+          -0.0683
+        ],
+        [
+          -0.0217,
+          -0.1387,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "Narrow latitude (~6 stops) - shadow lift is important (note the positive shadow adjustment). Benefits from overexposure. EI 800-1000 for denser negatives, EI 1600 only when speed is truly needed.",

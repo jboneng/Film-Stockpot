@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QDockWidget,
     QFileDialog,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QMainWindow,
     QMenu,
@@ -19,6 +20,7 @@ from PyQt6.QtWidgets import (
     QProgressDialog,
     QPushButton,
     QScrollArea,
+    QSlider,
     QTabWidget,
     QToolBar,
     QVBoxLayout,
@@ -29,15 +31,32 @@ from film_stockpot import __version__
 from film_stockpot.export_naming import ExportNamingContext, render_export_name
 from film_stockpot.image.folder import list_tiff_files
 from film_stockpot.image.io import array_to_qimage, load_image_array
+from film_stockpot.image.crosstalk import (
+    CROSSTALK_DEFAULT,
+    CROSSTALK_MAX,
+    CROSSTALK_MIN,
+    CROSSTALK_PRECISION,
+    crosstalk_amount_to_slider,
+    crosstalk_slider_to_amount,
+    format_crosstalk_amount,
+    normalize_crosstalk_amount,
+    preset_has_crosstalk,
+)
+from film_stockpot.image.pipeline import apply_film_preset, apply_film_preset_from_pre_neutralize
 from film_stockpot.image.scanner import NEUTRAL
-from film_stockpot.presets.loader import load_base, load_grouped_presets
+from film_stockpot.presets.loader import load_base, load_grouped_presets, resolve_preset_data
 from film_stockpot.sidecar import (
     delete_sidecar,
     has_sidecar,
     read_sidecar,
     write_sidecar,
 )
-from film_stockpot.ui.preview_stages import PreviewStage, compute_base_graded, compute_full_graded
+from film_stockpot.ui.preview_stages import (
+    PreviewStage,
+    compute_base_graded,
+    compute_full_graded,
+    compute_pre_neutralize,
+)
 from film_stockpot.ui.recent_folders import last_folder, load_recent_folders, remember_folder
 from film_stockpot.ui.icons import load_icon
 from film_stockpot.ui.widgets.busy_overlay import BusyOverlay
@@ -58,6 +77,7 @@ class MainWindow(QMainWindow):
     _PREVIEW_MAX = 1800
     _LIVE_DEBOUNCE_MS = 15
     _PRESET_DEBOUNCE_MS = 200
+    _CROSSTALK_DEBOUNCE_MS = 80
     _SIDECAR_DEBOUNCE_MS = 500
 
     def __init__(self) -> None:
@@ -67,6 +87,7 @@ class MainWindow(QMainWindow):
         self._original_rgb: np.ndarray | None = None
         self._preview_original: np.ndarray | None = None
         self._preview_base_graded: np.ndarray | None = None
+        self._preview_pre_neutralize: np.ndarray | None = None
         self._current_path: str | None = None
         self._adjust_base: np.ndarray | None = None
         self._preview_base: np.ndarray | None = None
@@ -75,6 +96,7 @@ class MainWindow(QMainWindow):
         self._active_base: dict | None = None
         self._external_preset_active = False
         self._restoring = False
+        self._reset_crosstalk_on_apply = True
         self._batch_worker: BatchExportWorker | None = None
         self._threadpool = QThreadPool.globalInstance()
 
@@ -107,6 +129,10 @@ class MainWindow(QMainWindow):
         self._preset_timer = QTimer(self)
         self._preset_timer.setSingleShot(True)
         self._preset_timer.timeout.connect(self._apply_selected_preset)
+
+        self._crosstalk_timer = QTimer(self)
+        self._crosstalk_timer.setSingleShot(True)
+        self._crosstalk_timer.timeout.connect(self._apply_crosstalk_only)
 
         self._sidecar_timer = QTimer(self)
         self._sidecar_timer.setSingleShot(True)
@@ -170,6 +196,31 @@ class MainWindow(QMainWindow):
         film_group = QGroupBox("Film Stock", self)
         film_layout = QVBoxLayout(film_group)
         film_layout.addWidget(self._combo)
+
+        crosstalk_row = QVBoxLayout()
+        crosstalk_row.setSpacing(2)
+        crosstalk_header = QHBoxLayout()
+        crosstalk_header.addWidget(QLabel("Crosstalk", self))
+        crosstalk_header.addStretch(1)
+        self._crosstalk_value = QLabel(format_crosstalk_amount(CROSSTALK_DEFAULT), self)
+        self._crosstalk_value.setMinimumWidth(36)
+        self._crosstalk_value.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        crosstalk_header.addWidget(self._crosstalk_value)
+        crosstalk_row.addLayout(crosstalk_header)
+
+        self._crosstalk_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self._crosstalk_slider.setRange(
+            int(CROSSTALK_MIN * CROSSTALK_PRECISION),
+            int(CROSSTALK_MAX * CROSSTALK_PRECISION),
+        )
+        self._crosstalk_slider.setValue(crosstalk_amount_to_slider(CROSSTALK_DEFAULT))
+        self._crosstalk_slider.setEnabled(False)
+        self._crosstalk_slider.setToolTip(
+            "Spectral crosstalk correction: 0 = off, 0.5 = default, 1 = full matrix"
+        )
+        self._crosstalk_slider.valueChanged.connect(self._on_crosstalk_changed)
+        crosstalk_row.addWidget(self._crosstalk_slider)
+        film_layout.addLayout(crosstalk_row)
 
         self._reset_film_button = QPushButton("Reset Film Stock", self)
         self._reset_film_button.clicked.connect(self._reset_film_stock)
@@ -256,6 +307,74 @@ class MainWindow(QMainWindow):
         self._combo.setCurrentIndex(0)
         self._combo.blockSignals(False)
         self._external_preset_active = False
+        self._sync_crosstalk_controls()
+
+    def _adjustment_settings(self) -> dict:
+        return {
+            **self._panel.settings(),
+            "crosstalk": crosstalk_slider_to_amount(self._crosstalk_slider.value()),
+        }
+
+    def _set_crosstalk_value(self, value: float) -> None:
+        amount = normalize_crosstalk_amount(value)
+        slider_value = crosstalk_amount_to_slider(amount)
+        self._crosstalk_slider.blockSignals(True)
+        self._crosstalk_slider.setValue(slider_value)
+        self._crosstalk_slider.blockSignals(False)
+        self._crosstalk_value.setText(format_crosstalk_amount(amount))
+
+    def _sync_crosstalk_controls(self) -> None:
+        preset = self._render_preset_data()
+        enabled = preset is not None and preset_has_crosstalk(preset)
+        self._crosstalk_slider.setEnabled(enabled)
+
+    def _on_crosstalk_changed(self, value: int) -> None:
+        self._crosstalk_value.setText(format_crosstalk_amount(crosstalk_slider_to_amount(value)))
+        if self._current_preset() is not None:
+            self._crosstalk_timer.start(self._CROSSTALK_DEBOUNCE_MS)
+        self._schedule_sidecar_save()
+
+    def _apply_crosstalk_only(self) -> None:
+        if self._current_preset() is None or self._preview_original is None:
+            return
+        preset = self._render_preset_data()
+        if preset is None or not preset_has_crosstalk(preset):
+            return
+
+        # Crosstalk edits must win over any in-flight preset worker.
+        self._preset_timer.stop()
+        self._apply_generation += 1
+
+        base = self._active_base if self._active_base is not None else self._base
+        strength = crosstalk_slider_to_amount(self._crosstalk_slider.value())
+        self._refresh_base_graded_cache()
+        try:
+            if self._preview_pre_neutralize is not None:
+                processed = apply_film_preset_from_pre_neutralize(
+                    self._preview_pre_neutralize,
+                    self._preview_original,
+                    preset,
+                    base,
+                    crosstalk_strength=strength,
+                )
+            else:
+                processed = apply_film_preset(
+                    self._preview_original,
+                    preset,
+                    base,
+                    crosstalk_strength=strength,
+                )
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(
+                self,
+                "Unable to Apply Crosstalk",
+                f"Could not update the preview.\n\n{error}",
+            )
+            return
+        self._set_base(processed)
+
+    def _render_preset_data(self) -> dict | None:
+        return resolve_preset_data(self._current_preset())
 
     def _current_preset(self) -> dict | None:
         return self._combo.currentData(self._PRESET_ROLE)
@@ -365,7 +484,12 @@ class MainWindow(QMainWindow):
         # full-resolution original, so the saved file is unaffected.
         self._preview_original = self._downscale_for_preview(self._original_rgb)
         self._current_path = path
+        self._adjust_base = None
+        self._preview_base = None
+        self._preview_base_graded = None
+        self._preview_pre_neutralize = None
         self._preset_timer.stop()
+        self._crosstalk_timer.stop()
         self._sidecar_timer.stop()
 
         sidecar = read_sidecar(path)
@@ -412,30 +536,52 @@ class MainWindow(QMainWindow):
         self._restoring = True
         self._select_preset_in_combo(preset)
         self._panel.set_settings({**NEUTRAL, **adjustments})
+        self._set_crosstalk_value(adjustments.get("crosstalk", NEUTRAL["crosstalk"]))
         self._restoring = False
+        self._sync_crosstalk_controls()
 
         self._active_base = base
-        self._render_preset(preset, base)
+        self._refresh_base_graded_cache()
+        self._render_preset(
+            preset,
+            base,
+            crosstalk_strength=crosstalk_slider_to_amount(self._crosstalk_slider.value()),
+        )
         self._update_export_name_preview()
 
     def _restore_defaults(self) -> None:
         self._restoring = True
         self._select_preset_in_combo(None)
         self._panel.set_settings(dict(NEUTRAL))
+        self._set_crosstalk_value(NEUTRAL["crosstalk"])
         self._restoring = False
+        self._sync_crosstalk_controls()
 
         self._active_base = self._base
         self._render_preset(None, self._base)
         self._update_export_name_preview()
 
-    def _schedule_preset_apply(self) -> None:
+    def _schedule_preset_apply(self, *, reset_crosstalk: bool = True) -> None:
+        self._reset_crosstalk_on_apply = reset_crosstalk
         self._preset_timer.start(self._PRESET_DEBOUNCE_MS)
 
     def _apply_selected_preset(self) -> None:
         if self._original_rgb is None:
             return
+        self._crosstalk_timer.stop()
+        reset_crosstalk = self._reset_crosstalk_on_apply
+        self._reset_crosstalk_on_apply = True
+        if reset_crosstalk and not self._restoring:
+            self._set_crosstalk_value(NEUTRAL["crosstalk"])
+        self._sync_crosstalk_controls()
         self._active_base = self._base
-        self._render_preset(self._current_preset(), self._base)
+        self._refresh_base_graded_cache()
+        self._render_preset(
+            self._current_preset(),
+            self._base,
+            show_busy=reset_crosstalk,
+            crosstalk_strength=crosstalk_slider_to_amount(self._crosstalk_slider.value()),
+        )
         self._schedule_sidecar_save()
         self._update_export_name_preview()
 
@@ -448,19 +594,38 @@ class MainWindow(QMainWindow):
         step = int(np.ceil(longest / self._PREVIEW_MAX))
         return np.ascontiguousarray(rgb[::step, ::step])
 
-    def _render_preset(self, preset: dict | None, base: dict | None) -> None:
+    def _render_preset(
+        self,
+        preset: dict | None,
+        base: dict | None,
+        *,
+        show_busy: bool = True,
+        crosstalk_strength: float | None = None,
+    ) -> None:
         if self._preview_original is None:
             return
 
+        resolved = resolve_preset_data(preset)
         self._apply_generation += 1
         generation = self._apply_generation
 
-        if preset is None:
+        if resolved is None:
             self._set_base(self._preview_original)
             return
 
-        self._set_busy(True, f"Applying {preset.get('name', 'preset')}...")
-        worker = ApplyPresetWorker(self._preview_original, preset, base)
+        if show_busy:
+            self._set_busy(True, f"Applying {resolved.get('name', 'preset')}...")
+        strength = (
+            crosstalk_strength
+            if crosstalk_strength is not None
+            else crosstalk_slider_to_amount(self._crosstalk_slider.value())
+        )
+        worker = ApplyPresetWorker(
+            self._preview_original,
+            resolved,
+            base,
+            crosstalk_strength=strength,
+        )
         worker.signals.finished.connect(
             lambda processed, gen=generation: self._on_apply_finished(processed, gen)
         )
@@ -473,7 +638,8 @@ class MainWindow(QMainWindow):
         if generation != self._apply_generation:
             return
         self._set_base(processed)
-        self._set_busy(False)
+        if self._busy.isVisible():
+            self._set_busy(False)
 
     def _on_apply_error(self, message: str, generation: int) -> None:
         if generation != self._apply_generation:
@@ -492,8 +658,11 @@ class MainWindow(QMainWindow):
     def _is_default_state(self) -> bool:
         if self._current_preset() is not None:
             return False
-        settings = self._panel.settings()
-        return all(settings.get(key) == value for key, value in NEUTRAL.items())
+        settings = self._adjustment_settings()
+        return all(
+            abs(float(settings.get(key, 0)) - float(value)) < 1e-6 if key == "crosstalk" else settings.get(key) == value
+            for key, value in NEUTRAL.items()
+        )
 
     def _schedule_sidecar_save(self) -> None:
         if self._restoring or self._current_path is None:
@@ -514,7 +683,7 @@ class MainWindow(QMainWindow):
                 self._current_path,
                 preset=self._current_preset(),
                 base=self._active_base,
-                adjustments=self._panel.settings(),
+                adjustments=self._adjustment_settings(),
             )
         except OSError as error:
             QMessageBox.warning(self, "Unable to Save Sidecar", f"Could not write the sidecar file.\n\n{error}")
@@ -536,10 +705,18 @@ class MainWindow(QMainWindow):
         self._build_preview()
         self._update_live()
 
+    def _refresh_base_graded_cache(self) -> None:
+        if self._preview_original is None:
+            self._preview_base_graded = None
+            self._preview_pre_neutralize = None
+            return
+        base = self._active_base if self._active_base is not None else self._base
+        self._preview_pre_neutralize = compute_pre_neutralize(self._preview_original, base)
+        self._preview_base_graded = compute_base_graded(self._preview_original, base)
+
     def _build_preview(self) -> None:
         if self._adjust_base is None:
             self._preview_base = None
-            self._preview_base_graded = None
             return
         height, width = self._adjust_base.shape[:2]
         longest = max(height, width)
@@ -549,13 +726,7 @@ class MainWindow(QMainWindow):
         else:
             self._preview_base = self._adjust_base
 
-        if self._preview_original is not None:
-            self._preview_base_graded = compute_base_graded(
-                self._preview_original,
-                self._active_base if self._active_base is not None else self._base,
-            )
-        else:
-            self._preview_base_graded = None
+        self._refresh_base_graded_cache()
 
     def _stage_array(self, stage: PreviewStage) -> np.ndarray | None:
         if stage is PreviewStage.FLAT:
@@ -567,7 +738,7 @@ class MainWindow(QMainWindow):
         if stage is PreviewStage.FULL:
             if self._preview_base is None:
                 return None
-            return compute_full_graded(self._preview_base, self._panel.settings())
+            return compute_full_graded(self._preview_base, self._adjustment_settings())
         return None
 
     def _refresh_preview_view(self) -> None:
@@ -599,7 +770,7 @@ class MainWindow(QMainWindow):
             self._histogram.clear()
             self._refresh_preview_view()
             return
-        full = compute_full_graded(self._preview_base, self._panel.settings())
+        full = compute_full_graded(self._preview_base, self._adjustment_settings())
         self._histogram.set_image(full)
         self._refresh_preview_view()
 
@@ -615,7 +786,7 @@ class MainWindow(QMainWindow):
 
         preset = self._current_preset()
         base = self._active_base if self._active_base is not None else self._base
-        adjustments = self._panel.settings()
+        adjustments = self._adjustment_settings()
         targets = [path for path in paths if not only_unedited or not has_sidecar(path)]
         if not targets:
             QMessageBox.information(
@@ -682,7 +853,7 @@ class MainWindow(QMainWindow):
             self._original_rgb,
             self._current_preset(),
             base,
-            self._panel.settings(),
+            self._adjustment_settings(),
             path,
         )
         worker.signals.finished.connect(self._on_export_one_finished)
@@ -782,7 +953,7 @@ class MainWindow(QMainWindow):
             paths,
             fallback_preset=self._current_preset(),
             fallback_base=self._active_base if self._active_base is not None else self._base,
-            fallback_adjustments=self._panel.settings(),
+            fallback_adjustments=self._adjustment_settings(),
             sidecar_default_base=self._base,
         )
         return jobs
@@ -847,6 +1018,14 @@ class MainWindow(QMainWindow):
         self._open_action.setEnabled(not busy)
         self._film_strip.set_enabled(not busy)
         self._combo.setEnabled(not busy)
+        preset = self._render_preset_data()
+        crosstalk_enabled = (
+            has_image
+            and not busy
+            and preset is not None
+            and preset_has_crosstalk(preset)
+        )
+        self._crosstalk_slider.setEnabled(crosstalk_enabled)
         self._reset_film_button.setEnabled(has_image and not busy)
         self._panel.setEnabled(has_image and not busy)
         self._export_panel.set_enabled(has_image and not busy)

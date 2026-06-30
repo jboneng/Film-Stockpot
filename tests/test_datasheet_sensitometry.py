@@ -86,4 +86,12 @@ def test_acutance_from_mtf() -> None:
     acu = derive_acutance_from_curves(_SAMPLE_MTF)
     assert acu is not None
     assert acu["mtf50_cycles_per_mm"] > 0
-    assert acu["strength"] > 0
+    assert acu["strength"] <= 0.10
+
+
+def test_rejects_non_monotonic_rgb_curves() -> None:
+    from film_stockpot.datasheet.sensitometry import is_valid_tone_curves_rgb
+
+    assert not is_valid_tone_curves_rgb(
+        {"r": [[0, 139], [128, 24], [255, 0]], "g": [[0, 0], [255, 255]], "b": [[0, 0], [255, 255]]}
+    )

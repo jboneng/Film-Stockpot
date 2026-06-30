@@ -10,9 +10,11 @@ from PyQt6.QtGui import QPixmap
 
 from film_stockpot.export_engine import export_batch
 from film_stockpot.export_naming import DEFAULT_TEMPLATE
+from film_stockpot.image.crosstalk import crosstalk_strength_from_adjustments
 from film_stockpot.image.io import array_to_qimage, load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.scanner import apply_scanner_adjustments
+from film_stockpot.presets.loader import resolve_preset_data
 
 
 class ThumbnailSignals(QObject):
@@ -60,17 +62,30 @@ class ApplyPresetWorker(QRunnable):
     different presets never stack. Emits the processed float32 RGB array.
     """
 
-    def __init__(self, original_rgb: np.ndarray, preset_data: dict, base_data: dict | None = None) -> None:
+    def __init__(
+        self,
+        original_rgb: np.ndarray,
+        preset_data: dict,
+        base_data: dict | None = None,
+        *,
+        crosstalk_strength: float = 0.0,
+    ) -> None:
         super().__init__()
         self._original_rgb = original_rgb
         self._preset_data = preset_data
         self._base_data = base_data
+        self._crosstalk_strength = crosstalk_strength
         self.signals = ApplyPresetSignals()
 
     @pyqtSlot()
     def run(self) -> None:
         try:
-            processed = apply_film_preset(self._original_rgb, self._preset_data, self._base_data)
+            processed = apply_film_preset(
+                self._original_rgb,
+                self._preset_data,
+                self._base_data,
+                crosstalk_strength=self._crosstalk_strength,
+            )
         except Exception as error:  # noqa: BLE001 - surfaced to the UI
             self.signals.error.emit(str(error))
             return
@@ -113,8 +128,14 @@ class ExportOneWorker(QRunnable):
     def run(self) -> None:
         try:
             rgb = self._original_rgb
-            if self._preset is not None:
-                rgb = apply_film_preset(rgb, self._preset, self._base)
+            preset = resolve_preset_data(self._preset)
+            if preset is not None:
+                rgb = apply_film_preset(
+                    rgb,
+                    preset,
+                    self._base,
+                    crosstalk_strength=crosstalk_strength_from_adjustments(self._adjustments),
+                )
             rgb = apply_scanner_adjustments(rgb, self._adjustments)
             save_image_array(self._path, rgb, bit_depth=self._bit_depth)
         except Exception as error:  # noqa: BLE001 - surfaced to the UI

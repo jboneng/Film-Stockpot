@@ -83,59 +83,43 @@
         0
       ],
       [
-        42,
-        5
+        32,
+        26
       ],
       [
-        85,
-        48
+        96,
+        106
       ],
       [
-        128,
-        100
-      ],
-      [
-        170,
-        153
-      ],
-      [
-        212,
-        207
+        192,
+        212
       ],
       [
         255,
-        255
+        252
       ]
     ],
     "tone_curves_rgb": {
       "r": [
         [
           0,
-          0
+          2
         ],
         [
-          42,
-          8
-        ],
-        [
-          85,
-          54
+          64,
+          66
         ],
         [
           128,
-          105
+          132
         ],
         [
-          170,
-          156
-        ],
-        [
-          212,
-          208
+          192,
+          196
         ],
         [
           255,
-          255
+          254
         ]
       ],
       "g": [
@@ -144,24 +128,8 @@
           0
         ],
         [
-          42,
-          4
-        ],
-        [
-          85,
-          47
-        ],
-        [
           128,
-          101
-        ],
-        [
-          170,
-          155
-        ],
-        [
-          212,
-          208
+          128
         ],
         [
           255,
@@ -171,31 +139,23 @@
       "b": [
         [
           0,
-          0
+          6
         ],
         [
-          42,
-          4
-        ],
-        [
-          85,
-          44
+          64,
+          64
         ],
         [
           128,
-          95
+          124
         ],
         [
-          170,
-          149
-        ],
-        [
-          212,
-          204
+          192,
+          186
         ],
         [
           255,
-          255
+          246
         ]
       ]
     },
@@ -275,17 +235,30 @@
       "formula": null,
       "note": null
     },
-    "acutance": {
-      "mtf50_cycles_per_mm": 80.6,
-      "strength": 0.28,
-      "radius": 1.2,
-      "amount": 0.392
-    },
     "ei_adjustment": {
       "contrast_pct_delta": 0.8,
       "gamma_delta": 0.005,
       "grain_strength_mult": 0.894,
       "lift_delta": 0.0012
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.004,
+          -0.03,
+          0.0
+        ],
+        [
+          -0.129,
+          1.01,
+          -0.04
+        ],
+        [
+          -0.05,
+          -0.158,
+          1.006
+        ]
+      ]
     }
   },
   "notes": "Long straight midtone, soft shoulder, ~12 stops latitude. Do NOT clip highlights aggressively - favor highlight recovery and low contrast over saturation boosts. EI 320 portrait, EI 400 neutral.",
@@ -298,11 +271,10 @@
     "d_min": "specified",
     "d_max": "specified",
     "saturation_index": "inferred",
-    "tone_curve_8bit": "specified",
+    "tone_curve_8bit": "inferred",
     "scanner_adjustments": "inferred",
     "look": "inferred",
-    "tone_curves_rgb": "specified",
-    "acutance": "specified"
+    "tone_curves_rgb": "inferred"
   },
   "source": "e4050.pdf"
 }

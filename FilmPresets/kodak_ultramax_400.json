@@ -82,28 +82,20 @@
         0
       ],
       [
-        43,
-        8
+        32,
+        18
       ],
       [
-        85,
-        51
+        96,
+        98
       ],
       [
-        128,
-        105
-      ],
-      [
-        170,
-        160
-      ],
-      [
-        212,
-        214
+        192,
+        220
       ],
       [
         255,
-        255
+        250
       ]
     ],
     "white_balance": {
@@ -160,103 +152,30 @@
       "formula": null,
       "note": null
     },
-    "tone_curves_rgb": {
-      "r": [
-        [
-          0,
-          0
-        ],
-        [
-          43,
-          7
-        ],
-        [
-          85,
-          49
-        ],
-        [
-          128,
-          101
-        ],
-        [
-          170,
-          155
-        ],
-        [
-          212,
-          209
-        ],
-        [
-          255,
-          255
-        ]
-      ],
-      "g": [
-        [
-          0,
-          0
-        ],
-        [
-          43,
-          9
-        ],
-        [
-          85,
-          55
-        ],
-        [
-          128,
-          110
-        ],
-        [
-          170,
-          165
-        ],
-        [
-          212,
-          218
-        ],
-        [
-          255,
-          255
-        ]
-      ],
-      "b": [
-        [
-          0,
-          0
-        ],
-        [
-          43,
-          7
-        ],
-        [
-          85,
-          50
-        ],
-        [
-          128,
-          104
-        ],
-        [
-          170,
-          160
-        ],
-        [
-          212,
-          215
-        ],
-        [
-          255,
-          255
-        ]
-      ]
-    },
     "ei_adjustment": {
       "contrast_pct_delta": 1.5,
       "gamma_delta": 0.009,
       "grain_strength_mult": 0.791,
       "lift_delta": 0.0023
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0579,
+          -0.0171
+        ],
+        [
+          -0.039,
+          1.0,
+          -0.0492
+        ],
+        [
+          -0.0152,
+          -0.1191,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "Contrastier than the Portra family. EI 200-250 for dense scans and stronger color, EI 400 nominal.",
@@ -269,7 +188,7 @@
     "d_min": "specified",
     "d_max": "specified",
     "saturation_index": "inferred",
-    "tone_curve_8bit": "specified",
+    "tone_curve_8bit": "inferred",
     "scanner_adjustments": "inferred",
     "look": "inferred",
     "tone_curves_rgb": "specified"

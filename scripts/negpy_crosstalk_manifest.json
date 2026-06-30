@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "description": "Dev-only map for scripts/import_negpy_crosstalk.py. Runtime reads matrices from each FilmPresets/*.json file.",
+  "default_negpy_crosstalk_dir": "C:/Users/jbone/Desktop/Negpy/NegPy/crosstalk",
+  "entries": {
+    "kodak_portra_160": "kodak_portra_160.toml",
+    "kodak_portra_400": "portra_400.toml",
+    "kodak_portra_800": "kodak_portra_800.toml",
+    "kodak_ektar_100": "kodak_ektar_100.toml",
+    "kodak_gold_200": "kodak_gold_200.toml",
+    "kodak_ultramax_400": "kodak_ultramax_400.toml",
+    "fuji_c200": "fujifilm_c200.toml",
+    "fujifilm_200": "fujifilm_200.toml",
+    "fujifilm_400": "fujifilm_400.toml",
+    "fuji_pro_400h": "fujifilm_pro_400h.toml",
+    "fuji_superia_xtra_400": "fujifilm_superia_xtra_400.toml",
+    "fuji_natura_1600": "fujifilm_natura_1600.toml",
+    "harman_phoenix_ii": "harman_phoenix_ii.toml"
+  }
+}

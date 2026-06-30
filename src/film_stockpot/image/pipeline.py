@@ -30,13 +30,23 @@ _DEFAULT_MONO_MIXER = np.array([0.299, 0.587, 0.114], dtype=np.float32)
 _CHANNELS = ("r", "g", "b")
 
 
-def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -> np.ndarray:
+def apply_film_preset(
+    rgb: np.ndarray,
+    preset: dict,
+    base: dict | None = None,
+    *,
+    crosstalk_strength: float = 0.0,
+) -> np.ndarray:
     """Return a new float32 RGB array with the preset's film look applied.
 
     If ``base`` is provided and defines an ``input_transform``, that de-log /
     scan-normalization stage runs first to expand a flat/log input back to full
     range, preventing the washed-out result that comes from grading a log scan
     directly. The film look is then applied on top.
+
+    ``crosstalk_strength`` (0..1) applies the preset's spectral crosstalk matrix
+    after base auto-levels and before neutralize / de-log, so dye-layer unmixing
+    runs on the scan's native channel balance.
 
     ``base`` may also provide ``look_defaults`` (e.g. halation and grain
     extraction) that apply to every stock unless the preset overrides them.
@@ -49,9 +59,73 @@ def apply_film_preset(rgb: np.ndarray, preset: dict, base: dict | None = None) -
     # place without risk of corrupting the grain source.
     grain_source_luma = image @ _LUMA_WEIGHTS
 
-    if base:
-        image = _apply_input_transform(image, base.get("input_transform"))
+    transform = base.get("input_transform") if base else None
+    if transform:
+        image = _apply_input_transform_pre_neutralize(image, transform)
 
+    if crosstalk_strength > 0.0 and not bool(preset.get("monochrome", False)):
+        from film_stockpot.image.crosstalk import apply_preset_crosstalk
+
+        image = apply_preset_crosstalk(image, preset, crosstalk_strength)
+
+    if transform:
+        image = _apply_input_transform_post_neutralize(image, transform)
+
+    return _apply_film_look(image, preset, base, grain_source_luma)
+
+
+def apply_film_preset_from_pre_neutralize(
+    pre_neutralize_rgb: np.ndarray,
+    grain_source_rgb: np.ndarray,
+    preset: dict,
+    base: dict | None = None,
+    *,
+    crosstalk_strength: float = 0.0,
+) -> np.ndarray:
+    """Apply crosstalk, remaining base stages, and the film look.
+
+    ``pre_neutralize_rgb`` is the flat scan after base auto-levels only (before
+    neutralize). Crosstalk runs on that buffer, then neutralize / de-log / gamma.
+    """
+    grain_source_luma = np.clip(grain_source_rgb.astype(np.float32, copy=False), 0.0, 1.0) @ _LUMA_WEIGHTS
+    image = np.clip(pre_neutralize_rgb.astype(np.float32, copy=True), 0.0, 1.0)
+
+    if crosstalk_strength > 0.0 and not bool(preset.get("monochrome", False)):
+        from film_stockpot.image.crosstalk import apply_preset_crosstalk
+
+        image = apply_preset_crosstalk(image, preset, crosstalk_strength)
+
+    transform = base.get("input_transform") if base else None
+    if transform:
+        image = _apply_input_transform_post_neutralize(image, transform)
+
+    return _apply_film_look(image, preset, base, grain_source_luma)
+
+
+def apply_film_preset_from_base_graded(
+    base_graded_rgb: np.ndarray,
+    grain_source_rgb: np.ndarray,
+    preset: dict,
+    base: dict | None = None,
+    *,
+    crosstalk_strength: float = 0.0,
+) -> np.ndarray:
+    """Backward-compatible alias; prefer :func:`apply_film_preset_from_pre_neutralize`."""
+    return apply_film_preset_from_pre_neutralize(
+        base_graded_rgb,
+        grain_source_rgb,
+        preset,
+        base,
+        crosstalk_strength=crosstalk_strength,
+    )
+
+
+def _apply_film_look(
+    image: np.ndarray,
+    preset: dict,
+    base: dict | None,
+    grain_source_luma: np.ndarray,
+) -> np.ndarray:
     pipeline = preset.get("pipeline", {})
     look = pipeline.get("look", {}) or {}
     scanner = pipeline.get("scanner_adjustments", {}) or {}
@@ -146,6 +220,15 @@ def _apply_input_transform(image: np.ndarray, transform: dict | None) -> np.ndar
     if not transform:
         return image
 
+    result = _apply_input_transform_pre_neutralize(image, transform)
+    return _apply_input_transform_post_neutralize(result, transform)
+
+
+def _apply_input_transform_pre_neutralize(image: np.ndarray, transform: dict | None) -> np.ndarray:
+    """Auto-level a flat scan before crosstalk and neutralize."""
+    if not transform:
+        return image
+
     result = image
     if transform.get("auto_levels", False):
         result = _auto_levels(
@@ -154,7 +237,15 @@ def _apply_input_transform(image: np.ndarray, transform: dict | None) -> np.ndar
             float(transform.get("white_clip_pct", 0.0) or 0.0),
             bool(transform.get("per_channel", False)),
         )
+    return np.clip(result, 0.0, 1.0)
 
+
+def _apply_input_transform_post_neutralize(image: np.ndarray, transform: dict | None) -> np.ndarray:
+    """Neutralize, de-log, and gamma-correct after crosstalk."""
+    if not transform:
+        return image
+
+    result = image
     if transform.get("neutralize", False):
         result = _neutralize(result, float(transform.get("neutralize_strength", 1.0) or 0.0))
 
@@ -170,10 +261,18 @@ def _apply_input_transform(image: np.ndarray, transform: dict | None) -> np.ndar
 
 
 def apply_base_input_transform(rgb: np.ndarray, base: dict | None) -> np.ndarray:
-    """Apply only the shared base ``input_transform`` stage (no film-stock look)."""
+    """Apply the full shared base ``input_transform`` stage (no film-stock look)."""
     image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
     if base:
         image = _apply_input_transform(image, base.get("input_transform"))
+    return image.astype(np.float32, copy=False)
+
+
+def apply_pre_neutralize_input_transform(rgb: np.ndarray, base: dict | None) -> np.ndarray:
+    """Apply base auto-levels only (the buffer crosstalk runs on)."""
+    image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
+    if base:
+        image = _apply_input_transform_pre_neutralize(image, base.get("input_transform"))
     return image.astype(np.float32, copy=False)
 
 
@@ -247,7 +346,7 @@ def _apply_white_balance(image: np.ndarray, white_balance: dict) -> np.ndarray:
 
 
 def _apply_tone_curve(image: np.ndarray, curve: list | None) -> np.ndarray:
-    if not curve:
+    if not curve or not _curve_is_monotonic(curve):
         return image
     xs = np.array([point[0] for point in curve], dtype=np.float32) / 255.0
     ys = np.array([point[1] for point in curve], dtype=np.float32) / 255.0
@@ -263,6 +362,8 @@ def _apply_per_channel_curves(image: np.ndarray, curves: dict | None) -> np.ndar
     """
     if not curves or image.ndim != 3 or image.shape[2] < 3:
         return image
+    if not _rgb_curves_are_valid(curves):
+        return image
 
     result = image.copy()
     touched = False
@@ -277,6 +378,20 @@ def _apply_per_channel_curves(image: np.ndarray, curves: dict | None) -> np.ndar
         touched = True
 
     return result.astype(np.float32) if touched else image
+
+
+def _curve_is_monotonic(curve: list) -> bool:
+    if len(curve) < 2:
+        return False
+    ordered = sorted(curve, key=lambda p: float(p[0]))
+    ys = [float(p[1]) for p in ordered]
+    return all(ys[i] <= ys[i + 1] + 1e-6 for i in range(len(ys) - 1))
+
+
+def _rgb_curves_are_valid(curves: dict) -> bool:
+    if set(curves.keys()) != {"r", "g", "b"}:
+        return False
+    return all(_curve_is_monotonic(curves[ch]) for ch in _CHANNELS)
 
 
 def _apply_color_grading(image: np.ndarray, grading: dict | None) -> np.ndarray:

@@ -88,31 +88,51 @@
       "r": [
         [
           0,
-          139
-        ],
-        [
-          42,
-          181
-        ],
-        [
-          85,
-          90
+          2
         ],
         [
           128,
-          24
-        ],
-        [
-          170,
-          70
-        ],
-        [
-          212,
-          122
+          132
         ],
         [
           255,
+          254
+        ]
+      ],
+      "g": [
+        [
+          0,
           0
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "b": [
+        [
+          0,
+          9
+        ],
+        [
+          64,
+          66
+        ],
+        [
+          128,
+          124
+        ],
+        [
+          192,
+          186
+        ],
+        [
+          255,
+          246
         ]
       ]
     },
@@ -191,17 +211,30 @@
       "toe_lift": 0.0,
       "formula": null
     },
-    "acutance": {
-      "mtf50_cycles_per_mm": 99.6,
-      "strength": 0.28,
-      "radius": 1.2,
-      "amount": 0.392
-    },
     "ei_adjustment": {
       "contrast_pct_delta": 0.8,
       "gamma_delta": 0.005,
       "grain_strength_mult": 0.894,
       "lift_delta": 0.0012
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0201,
+          0.0008
+        ],
+        [
+          -0.1368,
+          1.0,
+          -0.04
+        ],
+        [
+          -0.0578,
+          -0.1588,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "Longest latitude in the set (~12.5 stops), slightly cooler shadows. Like Portra 400, protect highlights rather than over-saturate. EI 500-640 dense, EI 800 box speed.",
@@ -217,8 +250,7 @@
     "tone_curve_8bit": "inferred",
     "scanner_adjustments": "inferred",
     "look": "inferred",
-    "tone_curves_rgb": "specified",
-    "acutance": "specified"
+    "tone_curves_rgb": "inferred"
   },
   "source": "e4051.pdf"
 }

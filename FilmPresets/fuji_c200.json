@@ -122,6 +122,25 @@
     "grain_extraction": {
       "strength": 0.2021,
       "radius": 1
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0459,
+          -0.0272
+        ],
+        [
+          -0.0482,
+          1.0,
+          -0.0586
+        ],
+        [
+          -0.0226,
+          -0.1489,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "More neutral / slightly cooler than Gold 200. Frontier start: Standard tone, Saturation 0, cool-neutral balance.",

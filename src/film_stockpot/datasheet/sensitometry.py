@@ -147,6 +147,27 @@ def _log_h_to_byte(x: float, x_min: float, x_max: float) -> int:
     return int(round(np.clip(t, 0.0, 1.0) * 255.0))
 
 
+def is_valid_tone_curve(points: list[list[float | int]]) -> bool:
+    if len(points) < 2:
+        return False
+    ordered = sorted(points, key=lambda p: float(p[0]))
+    ys = [float(p[1]) for p in ordered]
+    return all(ys[i] <= ys[i + 1] + 1e-6 for i in range(len(ys) - 1))
+
+
+def is_valid_tone_curves_rgb(curves: dict[str, list[list[float | int]]] | None) -> bool:
+    if not curves or set(curves.keys()) != {"r", "g", "b"}:
+        return False
+    return all(is_valid_tone_curve(curves[ch]) for ch in ("r", "g", "b"))
+
+
+def _enforce_monotonic_curve(points: list[list[int]]) -> list[list[int]] | None:
+    ordered = sorted([[int(p[0]), int(p[1])] for p in points], key=lambda p: p[0])
+    if not is_valid_tone_curve(ordered):
+        return None
+    return ordered
+
+
 def derive_tone_curves_from_characteristic(
     curves: list[dict],
     *,
@@ -157,7 +178,7 @@ def derive_tone_curves_from_characteristic(
         return None, None
 
     channel_series = _named_series(curve, _CHANNEL_NAMES)
-    if not channel_series:
+    if len(channel_series) < 3:
         return None, None
 
     x_min = min(float(_arr(p)[:, 0].min()) for p in channel_series)
@@ -166,6 +187,10 @@ def derive_tone_curves_from_characteristic(
     x_min -= pad
     x_max += pad
 
+    all_ys = np.concatenate([_arr(p)[:, 1] for p in channel_series[:3]])
+    y_global_min = float(np.min(all_ys))
+    y_global_max = float(np.max(all_ys))
+
     rgb_curves: dict[str, list[list[int]]] = {}
     channel_keys = ("r", "g", "b")
     all_byte_curves: list[list[list[int]]] = []
@@ -173,25 +198,30 @@ def derive_tone_curves_from_characteristic(
     for key, pts in zip(channel_keys, channel_series[:3]):
         arr = _arr(pts)
         xs, ys = arr[:, 0], arr[:, 1]
-        y_min, y_max = float(np.min(ys)), float(np.max(ys))
         sample_x = np.linspace(x_min, x_max, num=point_count)
         sample_y = np.interp(sample_x, xs, ys)
         byte_pts = [
-            [_log_h_to_byte(float(x), x_min, x_max), _density_to_byte(float(y), y_min, y_max)]
+            [
+                _log_h_to_byte(float(x), x_min, x_max),
+                _density_to_byte(float(y), y_global_min, y_global_max),
+            ]
             for x, y in zip(sample_x, sample_y)
         ]
-        rgb_curves[key] = byte_pts
-        all_byte_curves.append(byte_pts)
-
-    if len(all_byte_curves) < 3:
-        return None, rgb_curves if rgb_curves else None
+        cleaned = _enforce_monotonic_curve(byte_pts)
+        if cleaned is None:
+            return None, None
+        rgb_curves[key] = cleaned
+        all_byte_curves.append(cleaned)
 
     master: list[list[int]] = []
     for i in range(point_count):
         in_v = int(round(np.mean([c[i][0] for c in all_byte_curves])))
         out_v = int(round(np.mean([c[i][1] for c in all_byte_curves])))
         master.append([in_v, out_v])
-    return master, rgb_curves
+    master_clean = _enforce_monotonic_curve(master)
+    if master_clean is None or not is_valid_tone_curves_rgb(rgb_curves):
+        return None, None
+    return master_clean, rgb_curves
 
 
 def derive_acutance_from_curves(curves: list[dict]) -> dict[str, Any] | None:
@@ -226,13 +256,13 @@ def derive_acutance_from_curves(curves: list[dict]) -> dict[str, Any] | None:
     if best_mtf50 is None:
         return None
 
-    # Normalize strength: MTF50 ~30 lp/mm (soft) → 0.08, ~60 (sharp) → 0.22
-    strength = float(np.clip((best_mtf50 - 20.0) / 200.0, 0.05, 0.28))
+    # Subtle acutance only — datasheet MTF maps to a gentle micro-contrast boost.
+    strength = float(np.clip((best_mtf50 - 20.0) / 600.0, 0.04, 0.10))
     return {
         "mtf50_cycles_per_mm": round(best_mtf50, 1),
         "strength": round(strength, 3),
-        "radius": 1.2,
-        "amount": round(strength * 1.4, 3),
+        "radius": 1.0,
+        "amount": round(strength * 0.75, 3),
     }
 
 

@@ -135,6 +135,25 @@
       "gamma_delta": 0.005,
       "grain_strength_mult": 0.894,
       "lift_delta": 0.0012
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0579,
+          -0.0171
+        ],
+        [
+          -0.039,
+          1.0,
+          -0.0492
+        ],
+        [
+          -0.0152,
+          -0.1191,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "Warmer, shorter-shoulder consumer look with early punch. EI 100 for warm/pastel, EI 200 for neutral box-speed.",

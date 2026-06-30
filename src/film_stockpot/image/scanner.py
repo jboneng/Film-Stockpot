@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from film_stockpot.image.crosstalk import CROSSTALK_DEFAULT
+
 _LUMA_WEIGHTS = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
 
 TONE_FACTORS = {
@@ -29,6 +31,7 @@ NEUTRAL: dict = {
     "saturation": 0,
     "sharpness": 0,
     "tone": "Standard",
+    "crosstalk": CROSSTALK_DEFAULT,
 }
 
 

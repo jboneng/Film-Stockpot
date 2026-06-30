@@ -174,7 +174,11 @@ def test_halation_keeps_monochrome_gray() -> None:
 
 def test_per_channel_curves_affect_only_named_channel() -> None:
     image = np.full((4, 4, 3), 0.5, dtype=np.float32)
-    curves = {"r": [[0, 0], [128, 200], [255, 255]]}
+    curves = {
+        "r": [[0, 0], [128, 200], [255, 255]],
+        "g": [[0, 0], [128, 128], [255, 255]],
+        "b": [[0, 0], [128, 128], [255, 255]],
+    }
 
     out = _apply_per_channel_curves(image, curves)
 
@@ -228,3 +232,14 @@ def test_acutance_increases_local_contrast() -> None:
     config = {"amount": 0.2, "radius": 1.2}
     out = _apply_acutance(image, config)
     assert not np.allclose(out, image)
+
+
+def test_invalid_rgb_curves_are_skipped() -> None:
+    image = _sample_rgb()
+    bad = {
+        "r": [[0, 200], [128, 50], [255, 255]],
+        "g": [[0, 0], [255, 255]],
+        "b": [[0, 0], [255, 255]],
+    }
+    out = _apply_per_channel_curves(image, bad)
+    assert np.allclose(out, image)

@@ -207,6 +207,25 @@
       "gamma_delta": 0.009,
       "grain_strength_mult": 0.791,
       "lift_delta": 0.0023
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0459,
+          -0.0272
+        ],
+        [
+          -0.0482,
+          1.0,
+          -0.0586
+        ],
+        [
+          -0.0226,
+          -0.1489,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "Stronger cool green/cyan separation than Superia 200. Easy to make look wrong if over-saturated after the matrix. EI 200-250 max density, EI 400 nominal.",

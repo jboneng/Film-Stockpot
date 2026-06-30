@@ -16,6 +16,8 @@ from film_stockpot.datasheet.sensitometry import (
     derive_reciprocity_compensation,
     derive_sensitometry_from_curves,
     derive_tone_curves_from_characteristic,
+    is_valid_tone_curve,
+    is_valid_tone_curves_rgb,
     pgi_to_grain_strength,
     scalar_grain_value,
 )
@@ -133,14 +135,16 @@ def refresh_preset_from_extraction(
 
     if apply_pipeline:
         master, rgb = derive_tone_curves_from_characteristic(curves)
-        if master:
-            _log("pipeline.tone_curve_8bit", pipeline.get("tone_curve_8bit"), master)
-            pipeline["tone_curve_8bit"] = master
-            confidence["tone_curve_8bit"] = "specified"
-        if rgb and not out.get("monochrome"):
-            _log("pipeline.tone_curves_rgb", "...", "derived")
-            pipeline["tone_curves_rgb"] = rgb
-            confidence["tone_curves_rgb"] = "specified"
+        if master and is_valid_tone_curve(master):
+            pipeline["datasheet_tone_curve_8bit"] = master
+            if not preset.get("pipeline", {}).get("tone_curve_8bit"):
+                pipeline["tone_curve_8bit"] = master
+                confidence["tone_curve_8bit"] = "specified"
+        if rgb and is_valid_tone_curves_rgb(rgb) and not out.get("monochrome"):
+            pipeline["datasheet_tone_curves_rgb"] = rgb
+            if not preset.get("pipeline", {}).get("tone_curves_rgb"):
+                pipeline["tone_curves_rgb"] = rgb
+                confidence["tone_curves_rgb"] = "specified"
 
         acutance = derive_acutance_from_curves(curves)
         if acutance:

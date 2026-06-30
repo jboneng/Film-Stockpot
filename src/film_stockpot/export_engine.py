@@ -8,9 +8,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from film_stockpot.image.crosstalk import crosstalk_strength_from_adjustments
 from film_stockpot.image.io import load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.scanner import NEUTRAL, apply_scanner_adjustments
+from film_stockpot.presets.loader import resolve_preset_data
 from film_stockpot.export_naming import (
     DEFAULT_TEMPLATE,
     OUTPUT_EXTENSION,
@@ -147,9 +149,14 @@ def resolve_output_path(
 def render_job_to_path(job: ExportJob, target: Path, *, bit_depth: int = 16) -> None:
     """Load, render, and save one export job."""
     rgb = load_image_array(job["path"])
-    preset = job.get("preset")
+    preset = resolve_preset_data(job.get("preset"))
     if preset is not None:
-        rgb = apply_film_preset(rgb, preset, job.get("base"))
+        rgb = apply_film_preset(
+            rgb,
+            preset,
+            job.get("base"),
+            crosstalk_strength=crosstalk_strength_from_adjustments(job.get("adjustments")),
+        )
     rgb = apply_scanner_adjustments(rgb, job.get("adjustments"))
     target.parent.mkdir(parents=True, exist_ok=True)
     save_image_array(target, rgb, bit_depth=bit_depth)

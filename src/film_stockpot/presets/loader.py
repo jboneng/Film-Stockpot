@@ -102,3 +102,21 @@ def get_preset(preset_id: str, presets_dir: Path | None = None) -> Preset:
             if preset.id == preset_id:
                 return preset
     raise KeyError(f"No preset with id '{preset_id}'.")
+
+
+def resolve_preset_data(preset: dict | None, presets_dir: Path | None = None) -> dict | None:
+    """Return the best preset dict for rendering.
+
+    When a stock is installed locally, load the current JSON from disk so pipeline
+    blocks like ``crosstalk`` stay up to date. Fall back to embedded sidecar data
+    when the stock is not installed.
+    """
+    if preset is None:
+        return None
+    preset_id = preset.get("id")
+    if not preset_id:
+        return preset
+    try:
+        return get_preset(preset_id, presets_dir).data
+    except KeyError:
+        return preset

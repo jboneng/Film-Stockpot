@@ -82,28 +82,20 @@
         0
       ],
       [
-        42,
-        11
+        32,
+        16
       ],
       [
-        85,
-        51
+        96,
+        108
       ],
       [
-        128,
-        107
-      ],
-      [
-        170,
-        163
-      ],
-      [
-        212,
-        212
+        192,
+        222
       ],
       [
         255,
-        255
+        248
       ]
     ],
     "tone_curves_rgb": {
@@ -113,24 +105,16 @@
           0
         ],
         [
-          42,
-          8
-        ],
-        [
-          85,
-          54
+          64,
+          60
         ],
         [
           128,
-          108
+          132
         ],
         [
-          170,
-          161
-        ],
-        [
-          212,
-          209
+          192,
+          200
         ],
         [
           255,
@@ -143,58 +127,34 @@
           0
         ],
         [
-          42,
-          16
-        ],
-        [
-          85,
-          51
-        ],
-        [
           128,
-          106
-        ],
-        [
-          170,
-          163
-        ],
-        [
-          212,
-          213
+          126
         ],
         [
           255,
-          255
+          254
         ]
       ],
       "b": [
         [
           0,
-          0
-        ],
-        [
-          42,
           8
         ],
         [
-          85,
-          47
+          64,
+          66
         ],
         [
           128,
-          106
+          122
         ],
         [
-          170,
-          164
-        ],
-        [
-          212,
-          215
+          192,
+          184
         ],
         [
           255,
-          255
+          244
         ]
       ]
     },
@@ -273,6 +233,25 @@
       "toe_lift": 0.0,
       "formula": null,
       "note": null
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0288,
+          -0.0088
+        ],
+        [
+          -0.0984,
+          1.0,
+          -0.039
+        ],
+        [
+          -0.0261,
+          -0.1392,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "Highest chroma in the set; steepest central curve. Highlights need tighter control than Portra - avoid clipping vivid reds. EI 80 safe, EI 100 box-speed.",
@@ -285,10 +264,10 @@
     "d_min": "specified",
     "d_max": "specified",
     "saturation_index": "inferred",
-    "tone_curve_8bit": "specified",
+    "tone_curve_8bit": "inferred",
     "scanner_adjustments": "inferred",
     "look": "inferred",
-    "tone_curves_rgb": "specified"
+    "tone_curves_rgb": "inferred"
   },
   "source": "e4046.pdf"
 }

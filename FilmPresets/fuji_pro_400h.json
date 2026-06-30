@@ -185,6 +185,25 @@
       "gamma_delta": 0.005,
       "grain_strength_mult": 0.894,
       "lift_delta": 0.0012
+    },
+    "crosstalk": {
+      "matrix": [
+        [
+          1.0,
+          -0.0278,
+          -0.0186
+        ],
+        [
+          -0.059,
+          1.0,
+          -0.0488
+        ],
+        [
+          -0.0128,
+          -0.1196,
+          1.0
+        ]
+      ]
     }
   },
   "notes": "The cool, pastel counterpoint to Portra 400: softer contrast, gentle saturation, excellent overexposure behavior. Frontier start: All Soft, Saturation -1, slight cyan/green lift, low sharpening.",
