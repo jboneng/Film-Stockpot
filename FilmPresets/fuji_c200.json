@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "fuji_c200",
   "name": "Fujicolor C200",
   "manufacturer": "Fujifilm",
@@ -10,13 +10,19 @@
   "monochrome": false,
   "film": {
     "base_iso": 200,
-    "practical_ei_range": [160, 200],
+    "practical_ei_range": [
+      160,
+      200
+    ],
     "recommended_ei": 200,
     "curve_gamma": 0.58,
     "latitude_stops": 4.5,
     "color_bias": "neutral to slightly cool",
     "saturation_index": 100,
-    "grain": { "metric": "Diffuse RMS", "value": 4 },
+    "grain": {
+      "metric": "RMS",
+      "value": 4
+    },
     "resolving_power_lp_mm": null,
     "d_min": 0.24,
     "d_max": 2.6,
@@ -24,30 +30,113 @@
       "no_correction_to_s": 2,
       "formula": null,
       "table": [
-        { "exposure_s": 4, "correction_stops": 0.33 },
-        { "exposure_s": 16, "correction_stops": 0.67 },
-        { "exposure_s": 64, "correction_stops": 1.0 }
+        {
+          "exposure_s": 4,
+          "correction_stops": 0.33
+        },
+        {
+          "exposure_s": 16,
+          "correction_stops": 0.67
+        },
+        {
+          "exposure_s": 64,
+          "correction_stops": 1.0
+        }
       ]
+    },
+    "datasheet": {
+      "source_pdf": "films_c200_datasheet_01.pdf",
+      "extracted_at": "2026-06-30T09:26:39+00:00",
+      "document_id": null,
+      "schema_version": "1.1",
+      "curve_types": []
     }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 22], [96, 104], [192, 216], [255, 250]],
-    "white_balance": { "temp_k_bias": -50, "tint": -1, "rgb_gains": [0.99, 1.01, 1.0] },
-    "scanner_adjustments": { "highlights": -5, "shadows": -3, "gamma": 1.02, "saturation_pct": 102, "temp_k": -50, "tint": -1 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        22
+      ],
+      [
+        96,
+        104
+      ],
+      [
+        192,
+        216
+      ],
+      [
+        255,
+        250
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": -50,
+      "tint": -1,
+      "rgb_gains": [
+        0.99,
+        1.01,
+        1.0
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -5,
+      "shadows": -3,
+      "gamma": 1.02,
+      "saturation_pct": 102,
+      "temp_k": -50,
+      "tint": -1
+    },
     "look": {
       "contrast_pct": 9,
       "lift": -0.02,
       "gain": 1.02,
-      "color_matrix": [[1.0, 0.0, -0.01], [-0.01, 1.02, -0.01], [0.0, 0.01, 1.0]],
+      "color_matrix": [
+        [
+          1.0,
+          0.0,
+          -0.01
+        ],
+        [
+          -0.01,
+          1.02,
+          -0.01
+        ],
+        [
+          0.0,
+          0.01,
+          1.0
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 4 }
+    "grain": {
+      "metric": "RMS",
+      "value": 4
+    },
+    "grain_extraction": {
+      "strength": 0.2021,
+      "radius": 1
+    }
   },
   "notes": "More neutral / slightly cooler than Gold 200. Frontier start: Standard tone, Saturation 0, cool-neutral balance.",
   "confidence": {
-    "base_iso": "specified", "grain": "specified", "reciprocity": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "grain": "specified",
+    "reciprocity": "specified",
+    "curve_gamma": "estimated",
+    "latitude_stops": "estimated",
+    "d_min": "estimated",
+    "d_max": "estimated",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred"
   },
-  "source": "Documents/film-stock-report_2.md"
+  "source": "films_c200_datasheet_01.pdf"
 }

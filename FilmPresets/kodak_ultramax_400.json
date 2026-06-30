@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_ultramax_400",
   "name": "Kodak UltraMax 400",
   "manufacturer": "Kodak",
@@ -10,36 +10,269 @@
   "monochrome": false,
   "film": {
     "base_iso": 400,
-    "practical_ei_range": [200, 400],
+    "practical_ei_range": [
+      200,
+      400
+    ],
     "recommended_ei": 250,
-    "curve_gamma": 0.64,
-    "latitude_stops": 8,
+    "curve_gamma": 0.526,
+    "latitude_stops": 2.68,
     "color_bias": "warm neutral",
     "saturation_index": 110,
-    "grain": { "metric": "PGI", "value": 46 },
+    "grain": {
+      "metric": "PGI",
+      "value": 46
+    },
     "resolving_power_lp_mm": null,
-    "d_min": 0.30,
-    "d_max": 2.95,
-    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "exposures longer than 1 s may require compensation and filtration" }
+    "d_min": 0.695,
+    "d_max": 2.98,
+    "reciprocity": {
+      "no_correction_to_s": 1,
+      "formula": null,
+      "table": null,
+      "note": null,
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0
+    },
+    "datasheet": {
+      "source_pdf": "KodakUltraMax400TechSheet-1.pdf",
+      "extracted_at": "2026-06-30T09:27:05+00:00",
+      "document_id": "E-7023",
+      "schema_version": "1.1",
+      "curve_types": [
+        "characteristic_curves",
+        "spectral_dye_density",
+        "spectral_sensitivity"
+      ]
+    },
+    "sensitometry": {
+      "log_exposure_range": [
+        -3.44,
+        0.602
+      ],
+      "curve_log_span": 2.68,
+      "d_min": 0.695,
+      "d_max": 2.98,
+      "curve_gamma": 0.526,
+      "d_min_rgb": [
+        1.018,
+        0.735,
+        0.333
+      ],
+      "d_max_rgb": [
+        2.98,
+        2.457,
+        1.956
+      ],
+      "gamma_rgb": [
+        0.57,
+        0.519,
+        0.489
+      ]
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 18], [96, 98], [192, 220], [255, 250]],
-    "white_balance": { "temp_k_bias": 250, "tint": 1, "rgb_gains": [1.03, 1.0, 0.98] },
-    "scanner_adjustments": { "highlights": -5, "shadows": -6, "gamma": 1.04, "saturation_pct": 110, "temp_k": 250, "tint": 1 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        43,
+        8
+      ],
+      [
+        85,
+        51
+      ],
+      [
+        128,
+        105
+      ],
+      [
+        170,
+        160
+      ],
+      [
+        212,
+        214
+      ],
+      [
+        255,
+        255
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": 250,
+      "tint": 1,
+      "rgb_gains": [
+        1.03,
+        1.0,
+        0.98
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -5,
+      "shadows": -6,
+      "gamma": 1.04,
+      "saturation_pct": 110,
+      "temp_k": 250,
+      "tint": 1
+    },
     "look": {
       "contrast_pct": 14,
       "lift": -0.03,
       "gain": 1.03,
-      "color_matrix": [[1.03, 0.0, -0.02], [-0.01, 1.01, 0.0], [-0.03, 0.01, 1.02]],
+      "color_matrix": [
+        [
+          1.03,
+          0.0,
+          -0.02
+        ],
+        [
+          -0.01,
+          1.01,
+          0.0
+        ],
+        [
+          -0.03,
+          0.01,
+          1.02
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 46 }
+    "grain": {
+      "metric": "PGI",
+      "value": 46
+    },
+    "reciprocity_compensation": {
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0,
+      "formula": null,
+      "note": null
+    },
+    "tone_curves_rgb": {
+      "r": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          7
+        ],
+        [
+          85,
+          49
+        ],
+        [
+          128,
+          101
+        ],
+        [
+          170,
+          155
+        ],
+        [
+          212,
+          209
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "g": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          9
+        ],
+        [
+          85,
+          55
+        ],
+        [
+          128,
+          110
+        ],
+        [
+          170,
+          165
+        ],
+        [
+          212,
+          218
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "b": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          7
+        ],
+        [
+          85,
+          50
+        ],
+        [
+          128,
+          104
+        ],
+        [
+          170,
+          160
+        ],
+        [
+          212,
+          215
+        ],
+        [
+          255,
+          255
+        ]
+      ]
+    },
+    "ei_adjustment": {
+      "contrast_pct_delta": 1.5,
+      "gamma_delta": 0.009,
+      "grain_strength_mult": 0.791,
+      "lift_delta": 0.0023
+    }
   },
   "notes": "Contrastier than the Portra family. EI 200-250 for dense scans and stronger color, EI 400 nominal.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "grain": "specified",
+    "curve_gamma": "specified",
+    "latitude_stops": "specified",
+    "d_min": "specified",
+    "d_max": "specified",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "specified",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "tone_curves_rgb": "specified"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "KodakUltraMax400TechSheet-1.pdf"
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "fujifilm_200",
   "name": "Fujifilm 200",
   "manufacturer": "Fujifilm",
@@ -15,44 +15,177 @@
   },
   "film": {
     "base_iso": 200,
-    "practical_ei_range": [160, 200],
+    "practical_ei_range": [
+      160,
+      200
+    ],
     "recommended_ei": 200,
-    "curve_gamma": 0.58,
-    "latitude_stops": 4.5,
+    "curve_gamma": 0.1,
+    "latitude_stops": 4.0,
     "color_bias": "neutral to slightly cool",
     "saturation_index": 100,
-    "grain": { "metric": "Diffuse RMS", "value": 4, "note": "proxied from C200; current sheet omits RMS" },
+    "grain": {
+      "metric": "Diffuse RMS",
+      "value": 4,
+      "note": "proxied from C200; current sheet omits RMS"
+    },
     "resolving_power_lp_mm": null,
-    "d_min": 0.24,
-    "d_max": 2.6,
+    "d_min": 0.486,
+    "d_max": 3.967,
     "reciprocity": {
       "no_correction_to_s": 2,
       "formula": null,
       "table": [
-        { "exposure_s": 4, "correction_stops": 0.33 },
-        { "exposure_s": 16, "correction_stops": 0.67 },
-        { "exposure_s": 64, "correction_stops": 1.0 }
+        {
+          "exposure_s": 4,
+          "correction_stops": 0.33
+        },
+        {
+          "exposure_s": 16,
+          "correction_stops": 0.67
+        },
+        {
+          "exposure_s": 64,
+          "correction_stops": 1.0
+        }
       ]
+    },
+    "datasheet": {
+      "source_pdf": "fujifilm-200-speed-film_data-sheet.pdf",
+      "extracted_at": "2026-06-30T09:26:59+00:00",
+      "document_id": null,
+      "schema_version": "1.1",
+      "curve_types": [
+        "characteristic_curves",
+        "spectral_dye_density",
+        "spectral_sensitivity"
+      ]
+    },
+    "sensitometry": {
+      "log_exposure_range": [
+        -4.003,
+        -0.003
+      ],
+      "curve_log_span": 4.0,
+      "d_min": 0.486,
+      "d_max": 3.967,
+      "curve_gamma": 0.1
     }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 22], [96, 104], [192, 216], [255, 250]],
-    "white_balance": { "temp_k_bias": -50, "tint": -1, "rgb_gains": [0.99, 1.01, 1.0] },
-    "scanner_adjustments": { "highlights": -5, "shadows": -3, "gamma": 1.02, "saturation_pct": 102, "temp_k": -50, "tint": -1 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        22
+      ],
+      [
+        96,
+        104
+      ],
+      [
+        192,
+        216
+      ],
+      [
+        255,
+        250
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": -50,
+      "tint": -1,
+      "rgb_gains": [
+        0.99,
+        1.01,
+        1.0
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -5,
+      "shadows": -3,
+      "gamma": 1.02,
+      "saturation_pct": 102,
+      "temp_k": -50,
+      "tint": -1
+    },
     "look": {
       "contrast_pct": 9,
       "lift": -0.02,
       "gain": 1.02,
-      "color_matrix": [[1.0, 0.0, -0.01], [-0.01, 1.02, -0.01], [0.0, 0.01, 1.0]],
+      "color_matrix": [
+        [
+          1.0,
+          0.0,
+          -0.01
+        ],
+        [
+          -0.01,
+          1.02,
+          -0.01
+        ],
+        [
+          0.0,
+          0.01,
+          1.0
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "Diffuse RMS", "value": 4 }
+    "grain": {
+      "metric": "Diffuse RMS",
+      "value": 4
+    },
+    "tone_curves_rgb": {
+      "r": [
+        [
+          0,
+          122
+        ],
+        [
+          42,
+          244
+        ],
+        [
+          85,
+          114
+        ],
+        [
+          128,
+          146
+        ],
+        [
+          170,
+          75
+        ],
+        [
+          212,
+          103
+        ],
+        [
+          255,
+          45
+        ]
+      ]
+    }
   },
   "notes": "Current Fuji 200 product, treated as the C200 family. More neutral than Gold 200. Frontier start: Standard tone, Saturation 0, cool-neutral balance.",
   "confidence": {
     "base_iso": "specified",
-    "grain": "inferred", "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated", "reciprocity": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "grain": "inferred",
+    "curve_gamma": "estimated",
+    "latitude_stops": "estimated",
+    "d_min": "estimated",
+    "d_max": "estimated",
+    "reciprocity": "estimated",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "tone_curves_rgb": "specified"
   },
-  "source": "Documents/film-stock-report_2.md"
+  "source": "fujifilm-200-speed-film_data-sheet.pdf"
 }

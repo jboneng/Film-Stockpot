@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "harman_phoenix_ii",
   "name": "HARMAN Phoenix II",
   "manufacturer": "Harman",
@@ -10,44 +10,145 @@
   "monochrome": false,
   "film": {
     "base_iso": 200,
-    "practical_ei_range": [100, 200],
+    "practical_ei_range": [
+      100,
+      200
+    ],
     "recommended_ei": 160,
-    "curve_gamma": 0.80,
+    "curve_gamma": 0.8,
     "latitude_stops": 6,
     "color_bias": "magenta-leaning, maskless C-41 (no orange mask)",
     "saturation_index": 113,
-    "grain": { "metric": null, "value": null, "note": "finer than Phoenix I; no scalar published" },
+    "grain": {
+      "metric": null,
+      "value": null,
+      "note": "finer than Phoenix I; no scalar published"
+    },
     "resolving_power_lp_mm": null,
     "d_min": null,
     "d_max": null,
-    "reciprocity": { "no_correction_to_s": 1, "formula": "Ta = Tm^1.31", "table": null, "note": "push processing not recommended" }
+    "reciprocity": {
+      "no_correction_to_s": 1,
+      "formula": "Ta = Tm^1.31",
+      "table": null,
+      "note": "push processing not recommended",
+      "assumed_exposure_s": 1.0,
+      "correction_exponent": 1.31,
+      "toe_lift": 0.025
+    },
+    "datasheet": {
+      "source_pdf": "Phoenix_II_data_sheet_G25B.pdf",
+      "extracted_at": "2026-06-30T09:27:07+00:00",
+      "document_id": null,
+      "schema_version": "1.1",
+      "curve_types": []
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 14], [96, 96], [192, 224], [255, 250]],
-    "white_balance": { "temp_k_bias": -100, "tint": 6, "rgb_gains": [1.0, 0.98, 1.04] },
-    "scanner_adjustments": { "highlights": -4, "shadows": -8, "gamma": 1.06, "saturation_pct": 112, "temp_k": -100, "tint": 6 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        14
+      ],
+      [
+        96,
+        96
+      ],
+      [
+        192,
+        224
+      ],
+      [
+        255,
+        250
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": -100,
+      "tint": 6,
+      "rgb_gains": [
+        1.0,
+        0.98,
+        1.04
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -4,
+      "shadows": -8,
+      "gamma": 1.06,
+      "saturation_pct": 112,
+      "temp_k": -100,
+      "tint": 6
+    },
     "look": {
       "contrast_pct": 18,
       "lift": -0.04,
       "gain": 1.01,
-      "color_matrix": [[1.0, -0.02, 0.0], [0.0, 0.98, 0.02], [-0.03, 0.0, 1.06]],
+      "color_matrix": [
+        [
+          1.0,
+          -0.02,
+          0.0
+        ],
+        [
+          0.0,
+          0.98,
+          0.02
+        ],
+        [
+          -0.03,
+          0.0,
+          1.06
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": null, "value": null }
+    "grain": {
+      "metric": null,
+      "value": null
+    },
+    "reciprocity_compensation": {
+      "assumed_exposure_s": 1.0,
+      "correction_exponent": 1.31,
+      "toe_lift": 0.025,
+      "formula": "Ta = Tm^1.31"
+    },
+    "ei_adjustment": {
+      "contrast_pct_delta": 0.8,
+      "gamma_delta": 0.005,
+      "grain_strength_mult": 0.894,
+      "lift_delta": 0.0012
+    }
   },
   "native_scanner_profile": {
     "scanner": "Fuji SP-3000",
     "tone_adjustment": "All Hard",
-    "saturation": 2,
-    "color_balance": { "c": -2, "m": 0, "y": 0 },
-    "note": "Harman's official, unusually concrete SP-3000 starting point. The pipeline values above are an approximate RAW translation of this."
+    "saturation": "+2",
+    "color_balance": {
+      "c": "-2",
+      "m": "0",
+      "y": "0"
+    }
   },
   "notes": "Maskless C-41 with purplish negatives and narrow latitude - a dedicated profile, not a Kodak/Fuji variation. Punchier-than-default 'All Hard' tone. EI 100-160 safer, EI 200 when light demands.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "native_scanner_profile": "specified",
-    "curve_gamma": "inferred", "latitude_stops": "estimated",
-    "grain": "unspecified", "resolving_power_lp_mm": "unspecified", "d_min": "unspecified", "d_max": "unspecified",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "native_scanner_profile": "specified",
+    "curve_gamma": "inferred",
+    "latitude_stops": "estimated",
+    "grain": "unspecified",
+    "resolving_power_lp_mm": "unspecified",
+    "d_min": "unspecified",
+    "d_max": "unspecified",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "Phoenix_II_data_sheet_G25B.pdf"
 }

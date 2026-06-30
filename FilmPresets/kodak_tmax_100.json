@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_tmax_100",
   "name": "Kodak T-MAX 100",
   "manufacturer": "Kodak",
@@ -10,44 +10,129 @@
   "monochrome": true,
   "film": {
     "base_iso": 100,
-    "practical_ei_range": [100, 100],
+    "practical_ei_range": [
+      100,
+      100
+    ],
     "recommended_ei": 100,
-    "curve_gamma": 0.60,
+    "curve_gamma": 0.6,
     "latitude_stops": 4,
     "color_bias": "monochrome",
     "saturation_index": null,
-    "grain": { "metric": "Diffuse RMS", "value": 8 },
-    "resolving_power_lp_mm": { "chart_1_6_to_1": 63, "chart_1000_to_1": 200 },
-    "d_min": 0.10,
+    "grain": {
+      "metric": "Diffuse RMS",
+      "value": 8
+    },
+    "resolving_power_lp_mm": {
+      "chart_1_6_to_1": 63,
+      "chart_1000_to_1": 200
+    },
+    "d_min": 0.1,
     "d_max": 2.2,
     "reciprocity": {
       "no_correction_to_s": 1,
       "formula": null,
       "table": [
-        { "exposure_s": 10, "correction_stops": 0.33 },
-        { "exposure_s": 100, "correction_stops": 1.5 }
+        {
+          "exposure_s": 10,
+          "correction_stops": 0.33
+        },
+        {
+          "exposure_s": 100,
+          "correction_stops": 1.5
+        }
       ],
       "note": "T-MAX family long-exposure behavior"
+    },
+    "datasheet": {
+      "source_pdf": "f4016_TMax_100.pdf",
+      "extracted_at": "2026-06-30T09:26:15+00:00",
+      "document_id": "F-4016",
+      "schema_version": "1.1",
+      "curve_types": [
+        "mtf",
+        "spectral_dye_density"
+      ]
     }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 18], [96, 100], [192, 220], [255, 248]],
-    "white_balance": { "temp_k_bias": 0, "tint": 0, "rgb_gains": [1.0, 1.0, 1.0] },
-    "scanner_adjustments": { "highlights": -6, "shadows": 2, "gamma": 1.0, "saturation_pct": 0, "temp_k": 0, "tint": 0, "local_contrast_pct": 10 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        18
+      ],
+      [
+        96,
+        100
+      ],
+      [
+        192,
+        220
+      ],
+      [
+        255,
+        248
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": 0,
+      "tint": 0,
+      "rgb_gains": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -6,
+      "shadows": 2,
+      "gamma": 1.0,
+      "saturation_pct": 0,
+      "temp_k": 0,
+      "tint": 0,
+      "local_contrast_pct": 10
+    },
     "look": {
       "contrast_pct": 10,
       "lift": -0.02,
       "gain": 1.0,
       "color_matrix": null,
-      "mono_mixer": [0.30, 0.59, 0.11]
+      "mono_mixer": [
+        0.3,
+        0.59,
+        0.11
+      ]
     },
-    "grain": { "metric": "Diffuse RMS", "value": 8 }
+    "grain": {
+      "metric": "Diffuse RMS",
+      "value": 8
+    },
+    "acutance": {
+      "mtf50_cycles_per_mm": 148.0,
+      "strength": 0.28,
+      "radius": 1.2,
+      "amount": 0.392
+    }
   },
   "notes": "High-acutance, finest-grain monochrome anchor for a clean B&W look. Panchromatic mixer before curve/grain; saturation 0; slightly higher local contrast for acutance.",
   "confidence": {
-    "base_iso": "specified", "grain": "specified", "resolving_power_lp_mm": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated", "reciprocity": "estimated",
-    "mono_mixer": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "grain": "specified",
+    "resolving_power_lp_mm": "specified",
+    "curve_gamma": "estimated",
+    "latitude_stops": "estimated",
+    "d_min": "estimated",
+    "d_max": "estimated",
+    "reciprocity": "estimated",
+    "mono_mixer": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "acutance": "specified"
   },
-  "source": "Documents/film-stock-report_2.md"
+  "source": "f4016_TMax_100.pdf"
 }

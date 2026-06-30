@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_trix_400",
   "name": "Kodak Tri-X 400",
   "manufacturer": "Kodak",
@@ -9,14 +9,20 @@
   "preset_family": "black_and_white",
   "monochrome": true,
   "film": {
-    "base_iso": 400,
-    "practical_ei_range": [200, 1600],
+    "base_iso": 1600,
+    "practical_ei_range": [
+      200,
+      1600
+    ],
     "recommended_ei": 400,
-    "curve_gamma": 0.60,
+    "curve_gamma": 0.6,
     "latitude_stops": 4.5,
     "color_bias": "monochrome",
     "saturation_index": null,
-    "grain": { "metric": "Diffuse RMS", "value": 17 },
+    "grain": {
+      "metric": "Diffuse RMS",
+      "value": 17
+    },
     "resolving_power_lp_mm": null,
     "d_min": 0.12,
     "d_max": 2.3,
@@ -24,31 +30,115 @@
       "no_correction_to_s": 0.5,
       "formula": null,
       "table": [
-        { "exposure_s": 1, "correction_stops": 1.0 },
-        { "exposure_s": 10, "correction_stops": 2.0 },
-        { "exposure_s": 100, "correction_stops": 3.0 }
+        {
+          "exposure_s": 1,
+          "correction_stops": 1.0
+        },
+        {
+          "exposure_s": 10,
+          "correction_stops": 2.0
+        },
+        {
+          "exposure_s": 100,
+          "correction_stops": 3.0
+        }
       ],
       "note": "official push support to EI 1600/3200; development reductions as exposure lengthens"
+    },
+    "datasheet": {
+      "source_pdf": "f4017_trix_320400.pdf",
+      "extracted_at": "2026-06-30T09:26:21+00:00",
+      "document_id": "F-4017",
+      "schema_version": "1.1",
+      "curve_types": [
+        "mtf"
+      ]
     }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 16], [96, 98], [192, 222], [255, 249]],
-    "white_balance": { "temp_k_bias": 0, "tint": 0, "rgb_gains": [1.0, 1.0, 1.0] },
-    "scanner_adjustments": { "highlights": -6, "shadows": -4, "gamma": 1.02, "saturation_pct": 0, "temp_k": 0, "tint": 0, "local_contrast_pct": 12 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        16
+      ],
+      [
+        96,
+        98
+      ],
+      [
+        192,
+        222
+      ],
+      [
+        255,
+        249
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": 0,
+      "tint": 0,
+      "rgb_gains": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -6,
+      "shadows": -4,
+      "gamma": 1.02,
+      "saturation_pct": 0,
+      "temp_k": 0,
+      "tint": 0,
+      "local_contrast_pct": 12
+    },
     "look": {
       "contrast_pct": 14,
       "lift": -0.03,
       "gain": 1.0,
       "color_matrix": null,
-      "mono_mixer": [0.30, 0.59, 0.11]
+      "mono_mixer": [
+        0.3,
+        0.59,
+        0.11
+      ]
     },
-    "grain": { "metric": "Diffuse RMS", "value": 17 }
+    "grain": {
+      "metric": "Diffuse RMS",
+      "value": 17
+    },
+    "acutance": {
+      "mtf50_cycles_per_mm": 19.4,
+      "strength": 0.05,
+      "radius": 1.2,
+      "amount": 0.07
+    },
+    "ei_adjustment": {
+      "contrast_pct_delta": 3.0,
+      "gamma_delta": 0.019,
+      "grain_strength_mult": 0.5,
+      "lift_delta": 0.0045
+    }
   },
   "notes": "Punchy, classic reportage monochrome with prominent cubic grain. Apply the panchromatic mono mixer before curve/grain; saturation forced to 0. EI 400 normal; pushes well to 1600/3200.",
   "confidence": {
-    "base_iso": "specified", "grain": "specified", "reciprocity": "specified", "practical_ei_range": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "mono_mixer": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "grain": "specified",
+    "reciprocity": "specified",
+    "practical_ei_range": "specified",
+    "curve_gamma": "estimated",
+    "latitude_stops": "estimated",
+    "d_min": "estimated",
+    "d_max": "estimated",
+    "mono_mixer": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "acutance": "specified"
   },
-  "source": "Documents/film-stock-report_2.md"
+  "source": "f4017_trix_320400.pdf"
 }

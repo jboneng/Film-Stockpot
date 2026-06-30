@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_tmax_400",
   "name": "Kodak T-MAX 400",
   "manufacturer": "Kodak",
@@ -10,44 +10,167 @@
   "monochrome": true,
   "film": {
     "base_iso": 400,
-    "practical_ei_range": [400, 1600],
+    "practical_ei_range": [
+      400,
+      1600
+    ],
     "recommended_ei": 400,
-    "curve_gamma": 0.60,
-    "latitude_stops": 4,
+    "curve_gamma": 0.741,
+    "latitude_stops": 2.55,
     "color_bias": "monochrome",
     "saturation_index": null,
-    "grain": { "metric": "Diffuse RMS", "value": 10 },
-    "resolving_power_lp_mm": { "chart_1_6_to_1": 50, "chart_1000_to_1": 200 },
-    "d_min": 0.10,
-    "d_max": 2.2,
+    "grain": {
+      "metric": "RMS",
+      "value": 50
+    },
+    "resolving_power_lp_mm": {
+      "chart_1_6_to_1": 50,
+      "chart_1000_to_1": 200
+    },
+    "d_min": 0.32,
+    "d_max": 3.345,
     "reciprocity": {
       "no_correction_to_s": 1,
       "formula": null,
       "table": [
-        { "exposure_s": 10, "correction_stops": 0.33 },
-        { "exposure_s": 100, "correction_stops": 1.5 }
+        {
+          "exposure_s": 10,
+          "correction_stops": 0.33
+        },
+        {
+          "exposure_s": 100,
+          "correction_stops": 1.5
+        }
       ],
       "note": "official EI 800/1600/3200 push handling"
+    },
+    "datasheet": {
+      "source_pdf": "f4043_tmax_400.pdf",
+      "extracted_at": "2026-06-30T09:26:30+00:00",
+      "document_id": "F-4043",
+      "schema_version": "1.1",
+      "curve_types": [
+        "characteristic_curves",
+        "mtf",
+        "spectral_dye_density"
+      ]
+    },
+    "sensitometry": {
+      "log_exposure_range": [
+        -3.432,
+        0.398
+      ],
+      "curve_log_span": 2.55,
+      "d_min": 0.32,
+      "d_max": 3.345,
+      "curve_gamma": 0.741,
+      "d_min_rgb": [
+        0.28,
+        0.323,
+        0.358
+      ],
+      "d_max_rgb": [
+        2.119,
+        2.776,
+        3.345
+      ],
+      "gamma_rgb": [
+        0.551,
+        0.735,
+        0.936
+      ]
     }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 18], [96, 100], [192, 220], [255, 248]],
-    "white_balance": { "temp_k_bias": 0, "tint": 0, "rgb_gains": [1.0, 1.0, 1.0] },
-    "scanner_adjustments": { "highlights": -6, "shadows": 2, "gamma": 1.0, "saturation_pct": 0, "temp_k": 0, "tint": 0, "local_contrast_pct": 8 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        43,
+        7
+      ],
+      [
+        85,
+        42
+      ],
+      [
+        128,
+        93
+      ],
+      [
+        170,
+        149
+      ],
+      [
+        212,
+        203
+      ],
+      [
+        255,
+        255
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": 0,
+      "tint": 0,
+      "rgb_gains": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -6,
+      "shadows": 2,
+      "gamma": 1.0,
+      "saturation_pct": 0,
+      "temp_k": 0,
+      "tint": 0,
+      "local_contrast_pct": 8
+    },
     "look": {
       "contrast_pct": 10,
       "lift": -0.02,
       "gain": 1.0,
       "color_matrix": null,
-      "mono_mixer": [0.30, 0.59, 0.11]
+      "mono_mixer": [
+        0.3,
+        0.59,
+        0.11
+      ]
     },
-    "grain": { "metric": "Diffuse RMS", "value": 10 }
+    "grain": {
+      "metric": "RMS",
+      "value": 50
+    },
+    "grain_extraction": {
+      "strength": 0.7144,
+      "radius": 1
+    },
+    "acutance": {
+      "mtf50_cycles_per_mm": 80.6,
+      "strength": 0.28,
+      "radius": 1.2,
+      "amount": 0.392
+    }
   },
   "notes": "Cleaner, finer-grained tabular-grain monochrome - more clinical than Tri-X. Panchromatic mixer before curve/grain; saturation 0.",
   "confidence": {
-    "base_iso": "specified", "grain": "specified", "resolving_power_lp_mm": "specified", "reciprocity": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "mono_mixer": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "grain": "specified",
+    "resolving_power_lp_mm": "specified",
+    "reciprocity": "specified",
+    "curve_gamma": "specified",
+    "latitude_stops": "specified",
+    "d_min": "specified",
+    "d_max": "specified",
+    "mono_mixer": "inferred",
+    "tone_curve_8bit": "specified",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "acutance": "specified"
   },
-  "source": "Documents/film-stock-report_2.md"
+  "source": "f4043_tmax_400.pdf"
 }

@@ -3,11 +3,13 @@
 import numpy as np
 
 from film_stockpot.image.pipeline import (
+    _apply_acutance,
     _apply_color_grading,
     _apply_extracted_grain,
     _apply_halation,
     _apply_input_transform,
     _apply_per_channel_curves,
+    _apply_reciprocity_compensation,
     _neutralize,
     analyze_input,
     apply_film_preset,
@@ -211,3 +213,18 @@ def test_monochrome_with_base_effects_stays_gray() -> None:
 
     assert np.allclose(result[:, :, 0], result[:, :, 1])
     assert np.allclose(result[:, :, 1], result[:, :, 2])
+
+
+def test_reciprocity_compensation_lifts_shadows_for_long_exposure() -> None:
+    image = np.linspace(0.0, 1.0, 16 * 16 * 3, dtype=np.float32).reshape(16, 16, 3) * 0.4
+    config = {"assumed_exposure_s": 2.0, "correction_exponent": 1.31, "toe_lift": 0.02}
+    out = _apply_reciprocity_compensation(image, config)
+    assert float(out.mean()) > float(image.mean())
+
+
+def test_acutance_increases_local_contrast() -> None:
+    image = np.zeros((32, 32, 3), dtype=np.float32)
+    image[8:24, 8:24] = 0.8
+    config = {"amount": 0.2, "radius": 1.2}
+    out = _apply_acutance(image, config)
+    assert not np.allclose(out, image)

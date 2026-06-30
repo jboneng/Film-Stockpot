@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "ilford_delta_3200",
   "name": "Ilford Delta 3200",
   "manufacturer": "Ilford",
@@ -9,8 +9,11 @@
   "preset_family": "black_and_white",
   "monochrome": true,
   "film": {
-    "base_iso": 1000,
-    "practical_ei_range": [1000, 6400],
+    "base_iso": 3200,
+    "practical_ei_range": [
+      1000,
+      6400
+    ],
     "recommended_ei": 3200,
     "color_bias": "neutral monochrome",
     "grain": {
@@ -19,11 +22,56 @@
       "note": "core-shell crystal technology; no verified RMS figure in accessible datasheet"
     },
     "resolving_power_lp_mm": null,
-    "reciprocity": null
+    "reciprocity": {
+      "assumed_exposure_s": 1.0,
+      "correction_exponent": 1.33,
+      "toe_lift": 0.025,
+      "formula": "Ta = Tm^1.33"
+    },
+    "datasheet": {
+      "source_pdf": "DELTA 3200 technical data sheet F25.pdf",
+      "extracted_at": "2026-06-30T09:25:42+00:00",
+      "document_id": null,
+      "schema_version": "1.1",
+      "curve_types": []
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [24, 14], [64, 58], [128, 132], [192, 212], [255, 248]],
-    "white_balance": { "temp_k_bias": 0, "tint": 0, "rgb_gains": [1.0, 1.0, 1.0] },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        24,
+        14
+      ],
+      [
+        64,
+        58
+      ],
+      [
+        128,
+        132
+      ],
+      [
+        192,
+        212
+      ],
+      [
+        255,
+        248
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": 0,
+      "tint": 0,
+      "rgb_gains": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
     "scanner_adjustments": {
       "highlights": -8,
       "shadows": -4,
@@ -38,13 +86,26 @@
       "lift": -0.012,
       "gain": 1.0,
       "color_matrix": null,
-      "mono_mixer": [0.31, 0.58, 0.11]
+      "mono_mixer": [
+        0.31,
+        0.58,
+        0.11
+      ]
     },
     "grain_extraction": {
       "strength": 0.55,
       "radius": 1
     },
-    "grain": { "metric": "qualitative", "value": "pronounced" }
+    "grain": {
+      "metric": "qualitative",
+      "value": "pronounced"
+    },
+    "reciprocity_compensation": {
+      "assumed_exposure_s": 1.0,
+      "correction_exponent": 1.33,
+      "toe_lift": 0.025,
+      "formula": "Ta = Tm^1.33"
+    }
   },
   "notes": "Modern panchromatic high-speed professional B&W film (core-shell crystals). Official ISO speed is 1000/31° but commonly shot at EI 3200 and pushed further. This preset targets the typical EI 3200 scan look: moderate contrast, slightly compressed highlights, deeper shadows, and stronger grain extraction than slower Ilford stocks. For a flatter EI 1000 look, reduce contrast_pct, ease highlights, and lower grain_extraction.strength.",
   "confidence": {
@@ -56,7 +117,8 @@
     "tone_curve_8bit": "inferred",
     "scanner_adjustments": "inferred",
     "look": "inferred",
-    "grain_extraction": "inferred"
+    "grain_extraction": "inferred",
+    "reciprocity": "specified"
   },
-  "source": "Documents/deep-research-report.md"
+  "source": "DELTA 3200 technical data sheet F25.pdf"
 }

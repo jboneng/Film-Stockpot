@@ -24,6 +24,9 @@ dev = [
     "pyinstaller>=6.0",
     "pytest>=8.0",
 ]
+datasheet = [
+    "pymupdf>=1.24",
+]
 
 [tool.pylint.main]
 py-version = "3.12"

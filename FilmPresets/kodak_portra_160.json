@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_portra_160",
   "name": "Kodak Portra 160",
   "manufacturer": "Kodak",
@@ -9,48 +9,300 @@
   "preset_family": "portra",
   "monochrome": false,
   "film": {
-    "base_iso": 160,
-    "practical_ei_range": [100, 160],
+    "base_iso": 800,
+    "practical_ei_range": [
+      100,
+      160
+    ],
     "recommended_ei": 125,
-    "curve_gamma": 0.60,
+    "curve_gamma": 0.748,
     "latitude_stops": 7,
     "color_bias": "warm-neutral skin tones",
     "saturation_index": 100,
-    "grain": { "metric": "PGI", "value": 28 },
+    "grain": {
+      "metric": "PGI",
+      "value": 48
+    },
     "resolving_power_lp_mm": null,
-    "d_min": 0.20,
-    "d_max": 2.90,
-    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "longer exposures require testing" }
+    "d_min": 0.908,
+    "d_max": 2.594,
+    "reciprocity": {
+      "no_correction_to_s": 1,
+      "formula": null,
+      "table": null,
+      "note": "longer exposures require testing",
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0
+    },
+    "datasheet": {
+      "source_pdf": "e4040.pdf",
+      "extracted_at": "2026-06-30T09:25:45+00:00",
+      "document_id": "E-4040",
+      "schema_version": "1.1",
+      "curve_types": [
+        "characteristic_curves",
+        "mtf",
+        "spectral_dye_density",
+        "spectral_sensitivity"
+      ]
+    },
+    "sensitometry": {
+      "log_exposure_range": [
+        -2.33,
+        -0.038
+      ],
+      "curve_log_span": 1.48,
+      "d_min": 0.908,
+      "d_max": 2.594,
+      "curve_gamma": 0.748,
+      "d_min_rgb": [
+        1.13,
+        0.916,
+        0.679
+      ],
+      "d_max_rgb": [
+        2.594,
+        2.226,
+        2.015
+      ],
+      "gamma_rgb": [
+        0.799,
+        0.736,
+        0.708
+      ]
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 24], [96, 104], [192, 214], [255, 251]],
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        43,
+        8
+      ],
+      [
+        85,
+        54
+      ],
+      [
+        128,
+        110
+      ],
+      [
+        170,
+        166
+      ],
+      [
+        212,
+        219
+      ],
+      [
+        255,
+        255
+      ]
+    ],
     "tone_curves_rgb": {
-      "r": [[0, 1], [128, 130], [255, 254]],
-      "g": [[0, 0], [128, 128], [255, 255]],
-      "b": [[0, 5], [128, 126], [192, 188], [255, 248]]
+      "r": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          8
+        ],
+        [
+          85,
+          49
+        ],
+        [
+          128,
+          104
+        ],
+        [
+          170,
+          162
+        ],
+        [
+          212,
+          217
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "g": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          7
+        ],
+        [
+          85,
+          60
+        ],
+        [
+          128,
+          120
+        ],
+        [
+          170,
+          175
+        ],
+        [
+          212,
+          225
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "b": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          8
+        ],
+        [
+          85,
+          52
+        ],
+        [
+          128,
+          106
+        ],
+        [
+          170,
+          161
+        ],
+        [
+          212,
+          216
+        ],
+        [
+          255,
+          255
+        ]
+      ]
     },
     "color_grading": {
       "comment": "Portra 160: gentle warmth, finest of the line - softer split than 400.",
-      "shadows": [-0.003, 0.0, 0.005],
-      "midtones": [0.004, 0.001, -0.003],
-      "highlights": [0.009, 0.004, -0.008]
+      "shadows": [
+        -0.003,
+        0.0,
+        0.005
+      ],
+      "midtones": [
+        0.004,
+        0.001,
+        -0.003
+      ],
+      "highlights": [
+        0.009,
+        0.004,
+        -0.008
+      ]
     },
-    "white_balance": { "temp_k_bias": 150, "tint": 1, "rgb_gains": [1.02, 1.0, 0.99] },
-    "scanner_adjustments": { "highlights": -8, "shadows": -2, "gamma": 0.99, "saturation_pct": 100, "temp_k": 150, "tint": 1 },
+    "white_balance": {
+      "temp_k_bias": 150,
+      "tint": 1,
+      "rgb_gains": [
+        1.02,
+        1.0,
+        0.99
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -8,
+      "shadows": -2,
+      "gamma": 0.99,
+      "saturation_pct": 100,
+      "temp_k": 150,
+      "tint": 1
+    },
     "look": {
       "contrast_pct": 6,
       "lift": -0.01,
       "gain": 1.01,
-      "color_matrix": [[1.02, 0.0, -0.02], [0.0, 1.0, 0.0], [-0.01, 0.01, 1.01]],
+      "color_matrix": [
+        [
+          1.02,
+          0.0,
+          -0.02
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          -0.01,
+          0.01,
+          1.01
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 28 }
+    "grain": {
+      "metric": "PGI",
+      "value": 48
+    },
+    "grain_extraction": {
+      "strength": 0.3986,
+      "radius": 1
+    },
+    "reciprocity_compensation": {
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0,
+      "formula": null,
+      "note": null
+    },
+    "acutance": {
+      "mtf50_cycles_per_mm": 80.6,
+      "strength": 0.28,
+      "radius": 1.2,
+      "amount": 0.392
+    },
+    "ei_adjustment": {
+      "contrast_pct_delta": 3.4,
+      "gamma_delta": 0.021,
+      "grain_strength_mult": 0.395,
+      "lift_delta": 0.0051
+    }
   },
   "notes": "Neutral reference of the set (saturation index 100). Long toe, soft shoulder, gentle pastel highlights. EI 100-125 portrait, EI 160 neutral.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "grain": "specified",
+    "curve_gamma": "specified",
+    "latitude_stops": "estimated",
+    "d_min": "specified",
+    "d_max": "specified",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "specified",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "tone_curves_rgb": "specified",
+    "acutance": "specified"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "e4040.pdf"
 }

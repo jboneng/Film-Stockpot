@@ -1,0 +1,899 @@
+[
+  {
+    "preset_id": "fuji_c200",
+    "changes": [
+      {
+        "field": "film.grain",
+        "old": {
+          "metric": "Diffuse RMS",
+          "value": 4
+        },
+        "new": {
+          "metric": "RMS",
+          "value": 4
+        }
+      },
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.2021,
+          "radius": 1
+        }
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "fuji_natura_1600",
+    "changes": [],
+    "status": "updated"
+  },
+  {
+    "preset_id": "fuji_pro_400h",
+    "changes": [
+      {
+        "field": "film.grain",
+        "old": {
+          "metric": "Diffuse RMS",
+          "value": 4
+        },
+        "new": {
+          "metric": "RMS",
+          "value": 4
+        }
+      },
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.2021,
+          "radius": 1
+        }
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "fuji_superia_200",
+    "status": "skipped",
+    "reason": "no manifest entry"
+  },
+  {
+    "preset_id": "fuji_superia_xtra_400",
+    "changes": [
+      {
+        "field": "film.grain",
+        "old": {
+          "metric": "Diffuse RMS",
+          "value": 4
+        },
+        "new": {
+          "metric": "RMS",
+          "value": 4
+        }
+      },
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.2021,
+          "radius": 1
+        }
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "fujifilm_200",
+    "changes": [
+      {
+        "field": "film.d_min",
+        "old": 0.24,
+        "new": 0.486
+      },
+      {
+        "field": "film.d_max",
+        "old": 2.6,
+        "new": 3.967
+      },
+      {
+        "field": "film.curve_gamma",
+        "old": 0.58,
+        "new": 0.1
+      },
+      {
+        "field": "film.latitude_stops",
+        "old": 4.5,
+        "new": 4.0
+      },
+      {
+        "field": "pipeline.tone_curves_rgb",
+        "old": "...",
+        "new": "derived"
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "fujifilm_400",
+    "changes": [],
+    "status": "updated"
+  },
+  {
+    "preset_id": "harman_phoenix_ii",
+    "changes": [
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 1,
+          "formula": "Ta = Tm^1.31",
+          "table": null,
+          "note": "push processing not recommended"
+        },
+        "new": {
+          "no_correction_to_s": 1,
+          "formula": "Ta = Tm^1.31",
+          "table": null,
+          "note": "push processing not recommended",
+          "assumed_exposure_s": 1.0,
+          "correction_exponent": 1.31,
+          "toe_lift": 0.025
+        }
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "ilford_delta_3200",
+    "changes": [
+      {
+        "field": "film.base_iso",
+        "old": 1000,
+        "new": 3200
+      },
+      {
+        "field": "film.reciprocity",
+        "old": null,
+        "new": {
+          "assumed_exposure_s": 1.0,
+          "correction_exponent": 1.33,
+          "toe_lift": 0.025,
+          "formula": "Ta = Tm^1.33"
+        }
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "ilford_hp5_plus",
+    "changes": [
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 0.5,
+          "formula": "Ta = Tm^1.31",
+          "table": null,
+          "note": "no correction from 1/10000 s to 1/2 s; thereafter use the formula"
+        },
+        "new": {
+          "no_correction_to_s": 0.5,
+          "formula": "Ta = Tm^1.31",
+          "table": null,
+          "note": "no correction from 1/10000 s to 1/2 s; thereafter use the formula",
+          "assumed_exposure_s": 1.0,
+          "correction_exponent": 1.31,
+          "toe_lift": 0.025
+        }
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_ektar_100",
+    "changes": [
+      {
+        "field": "film.grain",
+        "old": {
+          "metric": "PGI",
+          "value": 24,
+          "note": "PGI <25 at 4x6 for 135"
+        },
+        "new": {
+          "metric": "PGI",
+          "value": 25
+        }
+      },
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.2877,
+          "radius": 1
+        }
+      },
+      {
+        "field": "film.d_min",
+        "old": 0.2,
+        "new": 0.566
+      },
+      {
+        "field": "film.d_max",
+        "old": 3.05,
+        "new": 3.035
+      },
+      {
+        "field": "film.curve_gamma",
+        "old": 0.69,
+        "new": 0.569
+      },
+      {
+        "field": "film.latitude_stops",
+        "old": 9,
+        "new": 2.8
+      },
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": "longer exposures require testing for critical work"
+        },
+        "new": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": null,
+          "no_correction_range_s": [
+            0.0,
+            1.0
+          ],
+          "assumed_exposure_s": 0.008,
+          "toe_lift": 0.0
+        }
+      },
+      {
+        "field": "pipeline.tone_curve_8bit",
+        "old": [
+          [
+            0,
+            0
+          ],
+          [
+            32,
+            16
+          ],
+          [
+            96,
+            108
+          ],
+          [
+            192,
+            222
+          ],
+          [
+            255,
+            248
+          ]
+        ],
+        "new": [
+          [
+            0,
+            0
+          ],
+          [
+            42,
+            11
+          ],
+          [
+            85,
+            51
+          ],
+          [
+            128,
+            107
+          ],
+          [
+            170,
+            163
+          ],
+          [
+            212,
+            212
+          ],
+          [
+            255,
+            255
+          ]
+        ]
+      },
+      {
+        "field": "pipeline.tone_curves_rgb",
+        "old": "...",
+        "new": "derived"
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_gold_200",
+    "changes": [
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.3817,
+          "radius": 1
+        }
+      },
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": "longer than 1 s: Kodak says to test"
+        },
+        "new": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": null,
+          "no_correction_range_s": [
+            0.0001,
+            1.0
+          ],
+          "assumed_exposure_s": 0.008,
+          "toe_lift": 0.0
+        }
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_portra_160",
+    "changes": [
+      {
+        "field": "film.base_iso",
+        "old": 160,
+        "new": 800
+      },
+      {
+        "field": "film.grain",
+        "old": {
+          "metric": "PGI",
+          "value": 28
+        },
+        "new": {
+          "metric": "PGI",
+          "value": 48
+        }
+      },
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.3986,
+          "radius": 1
+        }
+      },
+      {
+        "field": "film.d_min",
+        "old": 0.2,
+        "new": 0.908
+      },
+      {
+        "field": "film.d_max",
+        "old": 2.9,
+        "new": 2.594
+      },
+      {
+        "field": "film.curve_gamma",
+        "old": 0.6,
+        "new": 0.748
+      },
+      {
+        "field": "film.latitude_stops",
+        "old": 7,
+        "new": 1.4
+      },
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": "longer exposures require testing"
+        },
+        "new": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": null,
+          "no_correction_range_s": [
+            0.0,
+            1.0
+          ],
+          "assumed_exposure_s": 0.008,
+          "toe_lift": 0.0
+        }
+      },
+      {
+        "field": "pipeline.tone_curve_8bit",
+        "old": [
+          [
+            0,
+            0
+          ],
+          [
+            32,
+            24
+          ],
+          [
+            96,
+            104
+          ],
+          [
+            192,
+            214
+          ],
+          [
+            255,
+            251
+          ]
+        ],
+        "new": [
+          [
+            0,
+            0
+          ],
+          [
+            43,
+            8
+          ],
+          [
+            85,
+            54
+          ],
+          [
+            128,
+            110
+          ],
+          [
+            170,
+            166
+          ],
+          [
+            212,
+            219
+          ],
+          [
+            255,
+            255
+          ]
+        ]
+      },
+      {
+        "field": "pipeline.tone_curves_rgb",
+        "old": "...",
+        "new": "derived"
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_portra_400",
+    "changes": [
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.35,
+          "radius": 1
+        }
+      },
+      {
+        "field": "film.d_min",
+        "old": 0.22,
+        "new": 0.537
+      },
+      {
+        "field": "film.d_max",
+        "old": 3.05,
+        "new": 2.977
+      },
+      {
+        "field": "film.curve_gamma",
+        "old": 0.63,
+        "new": 0.569
+      },
+      {
+        "field": "film.latitude_stops",
+        "old": 12,
+        "new": 2.72
+      },
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": "longer exposures require testing"
+        },
+        "new": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": null,
+          "no_correction_range_s": [
+            0.0,
+            1.0
+          ],
+          "assumed_exposure_s": 0.008,
+          "toe_lift": 0.0
+        }
+      },
+      {
+        "field": "pipeline.tone_curve_8bit",
+        "old": [
+          [
+            0,
+            0
+          ],
+          [
+            32,
+            26
+          ],
+          [
+            96,
+            106
+          ],
+          [
+            192,
+            212
+          ],
+          [
+            255,
+            252
+          ]
+        ],
+        "new": [
+          [
+            0,
+            0
+          ],
+          [
+            42,
+            5
+          ],
+          [
+            85,
+            48
+          ],
+          [
+            128,
+            100
+          ],
+          [
+            170,
+            153
+          ],
+          [
+            212,
+            207
+          ],
+          [
+            255,
+            255
+          ]
+        ]
+      },
+      {
+        "field": "pipeline.tone_curves_rgb",
+        "old": "...",
+        "new": "derived"
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_portra_800",
+    "changes": [
+      {
+        "field": "film.grain",
+        "old": {
+          "metric": "PGI",
+          "value": 48
+        },
+        "new": {
+          "metric": "PGI",
+          "value": 28
+        }
+      },
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.3045,
+          "radius": 1
+        }
+      },
+      {
+        "field": "film.d_min",
+        "old": 0.35,
+        "new": 0.054
+      },
+      {
+        "field": "film.d_max",
+        "old": 2.95,
+        "new": 3.68
+      },
+      {
+        "field": "film.curve_gamma",
+        "old": 0.63,
+        "new": 0.1
+      },
+      {
+        "field": "film.latitude_stops",
+        "old": 12.5,
+        "new": 0.0
+      },
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": "longer exposures require testing; official pushed curves shown at EI 1600 and 3200"
+        },
+        "new": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": "longer exposures require testing; official pushed curves shown at EI 1600 and 3200",
+          "no_correction_range_s": [
+            0.0001,
+            1.0
+          ],
+          "assumed_exposure_s": 0.008,
+          "toe_lift": 0.0
+        }
+      },
+      {
+        "field": "pipeline.tone_curves_rgb",
+        "old": "...",
+        "new": "derived"
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_royal_gold_400",
+    "status": "skipped",
+    "reason": "no manifest entry"
+  },
+  {
+    "preset_id": "kodak_tmax_100",
+    "changes": [],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_tmax_400",
+    "changes": [
+      {
+        "field": "film.grain",
+        "old": {
+          "metric": "Diffuse RMS",
+          "value": 10
+        },
+        "new": {
+          "metric": "RMS",
+          "value": 50
+        }
+      },
+      {
+        "field": "pipeline.grain_extraction",
+        "old": null,
+        "new": {
+          "strength": 0.7144,
+          "radius": 1
+        }
+      },
+      {
+        "field": "film.d_min",
+        "old": 0.1,
+        "new": 0.32
+      },
+      {
+        "field": "film.d_max",
+        "old": 2.2,
+        "new": 3.345
+      },
+      {
+        "field": "film.curve_gamma",
+        "old": 0.6,
+        "new": 0.741
+      },
+      {
+        "field": "film.latitude_stops",
+        "old": 4,
+        "new": 2.83
+      },
+      {
+        "field": "pipeline.tone_curve_8bit",
+        "old": [
+          [
+            0,
+            0
+          ],
+          [
+            32,
+            18
+          ],
+          [
+            96,
+            100
+          ],
+          [
+            192,
+            220
+          ],
+          [
+            255,
+            248
+          ]
+        ],
+        "new": [
+          [
+            0,
+            0
+          ],
+          [
+            43,
+            7
+          ],
+          [
+            85,
+            42
+          ],
+          [
+            128,
+            93
+          ],
+          [
+            170,
+            149
+          ],
+          [
+            212,
+            203
+          ],
+          [
+            255,
+            255
+          ]
+        ]
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_trix_400",
+    "changes": [
+      {
+        "field": "film.base_iso",
+        "old": 400,
+        "new": 1600
+      }
+    ],
+    "status": "updated"
+  },
+  {
+    "preset_id": "kodak_ultramax_400",
+    "changes": [
+      {
+        "field": "film.d_min",
+        "old": 0.3,
+        "new": 0.695
+      },
+      {
+        "field": "film.d_max",
+        "old": 2.95,
+        "new": 2.98
+      },
+      {
+        "field": "film.curve_gamma",
+        "old": 0.64,
+        "new": 0.526
+      },
+      {
+        "field": "film.latitude_stops",
+        "old": 8,
+        "new": 2.73
+      },
+      {
+        "field": "film.reciprocity",
+        "old": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": "exposures longer than 1 s may require compensation and filtration"
+        },
+        "new": {
+          "no_correction_to_s": 1,
+          "formula": null,
+          "table": null,
+          "note": null,
+          "no_correction_range_s": [
+            0.0001,
+            1.0
+          ],
+          "assumed_exposure_s": 0.008,
+          "toe_lift": 0.0
+        }
+      },
+      {
+        "field": "pipeline.tone_curve_8bit",
+        "old": [
+          [
+            0,
+            0
+          ],
+          [
+            32,
+            18
+          ],
+          [
+            96,
+            98
+          ],
+          [
+            192,
+            220
+          ],
+          [
+            255,
+            250
+          ]
+        ],
+        "new": [
+          [
+            0,
+            0
+          ],
+          [
+            43,
+            8
+          ],
+          [
+            85,
+            51
+          ],
+          [
+            128,
+            105
+          ],
+          [
+            170,
+            160
+          ],
+          [
+            212,
+            214
+          ],
+          [
+            255,
+            255
+          ]
+        ]
+      },
+      {
+        "field": "pipeline.tone_curves_rgb",
+        "old": "...",
+        "new": "derived"
+      }
+    ],
+    "status": "updated"
+  }
+]

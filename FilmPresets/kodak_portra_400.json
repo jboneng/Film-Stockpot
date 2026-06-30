@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_portra_400",
   "name": "Kodak Portra 400",
   "manufacturer": "Kodak",
@@ -10,47 +10,299 @@
   "monochrome": false,
   "film": {
     "base_iso": 400,
-    "practical_ei_range": [250, 400],
+    "practical_ei_range": [
+      250,
+      400
+    ],
     "recommended_ei": 320,
-    "curve_gamma": 0.63,
+    "curve_gamma": 0.569,
     "latitude_stops": 12,
     "color_bias": "neutral-warm",
     "saturation_index": 103,
-    "grain": { "metric": "PGI", "value": 37 },
+    "grain": {
+      "metric": "PGI",
+      "value": 37
+    },
     "resolving_power_lp_mm": null,
-    "d_min": 0.22,
-    "d_max": 3.05,
-    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "longer exposures require testing" }
+    "d_min": 0.537,
+    "d_max": 2.977,
+    "reciprocity": {
+      "no_correction_to_s": 1,
+      "formula": null,
+      "table": null,
+      "note": "longer exposures require testing",
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0
+    },
+    "datasheet": {
+      "source_pdf": "e4050.pdf",
+      "extracted_at": "2026-06-30T09:25:54+00:00",
+      "document_id": "E-4050",
+      "schema_version": "1.1",
+      "curve_types": [
+        "characteristic_curves",
+        "mtf",
+        "spectral_dye_density",
+        "spectral_sensitivity"
+      ]
+    },
+    "sensitometry": {
+      "log_exposure_range": [
+        -3.385,
+        0.548
+      ],
+      "curve_log_span": 2.63,
+      "d_min": 0.537,
+      "d_max": 2.977,
+      "curve_gamma": 0.569,
+      "d_min_rgb": [
+        0.823,
+        0.605,
+        0.184
+      ],
+      "d_max_rgb": [
+        2.977,
+        2.395,
+        1.956
+      ],
+      "gamma_rgb": [
+        0.632,
+        0.546,
+        0.528
+      ]
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 26], [96, 106], [192, 212], [255, 252]],
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        42,
+        5
+      ],
+      [
+        85,
+        48
+      ],
+      [
+        128,
+        100
+      ],
+      [
+        170,
+        153
+      ],
+      [
+        212,
+        207
+      ],
+      [
+        255,
+        255
+      ]
+    ],
     "tone_curves_rgb": {
-      "r": [[0, 2], [64, 66], [128, 132], [192, 196], [255, 254]],
-      "g": [[0, 0], [128, 128], [255, 255]],
-      "b": [[0, 6], [64, 64], [128, 124], [192, 186], [255, 246]]
+      "r": [
+        [
+          0,
+          0
+        ],
+        [
+          42,
+          8
+        ],
+        [
+          85,
+          54
+        ],
+        [
+          128,
+          105
+        ],
+        [
+          170,
+          156
+        ],
+        [
+          212,
+          208
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "g": [
+        [
+          0,
+          0
+        ],
+        [
+          42,
+          4
+        ],
+        [
+          85,
+          47
+        ],
+        [
+          128,
+          101
+        ],
+        [
+          170,
+          155
+        ],
+        [
+          212,
+          208
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "b": [
+        [
+          0,
+          0
+        ],
+        [
+          42,
+          4
+        ],
+        [
+          85,
+          44
+        ],
+        [
+          128,
+          95
+        ],
+        [
+          170,
+          149
+        ],
+        [
+          212,
+          204
+        ],
+        [
+          255,
+          255
+        ]
+      ]
     },
     "color_grading": {
       "comment": "Portra signature: cool/neutral shadows, warm skin midtones, creamy warm highlights.",
-      "shadows": [-0.004, 0.0, 0.006],
-      "midtones": [0.006, 0.002, -0.004],
-      "highlights": [0.012, 0.006, -0.01]
+      "shadows": [
+        -0.004,
+        0.0,
+        0.006
+      ],
+      "midtones": [
+        0.006,
+        0.002,
+        -0.004
+      ],
+      "highlights": [
+        0.012,
+        0.006,
+        -0.01
+      ]
     },
-    "white_balance": { "temp_k_bias": 100, "tint": 1, "rgb_gains": [1.01, 1.0, 0.99] },
-    "scanner_adjustments": { "highlights": -10, "shadows": -2, "gamma": 0.98, "saturation_pct": 102, "temp_k": 100, "tint": 1 },
+    "white_balance": {
+      "temp_k_bias": 100,
+      "tint": 1,
+      "rgb_gains": [
+        1.01,
+        1.0,
+        0.99
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -10,
+      "shadows": -2,
+      "gamma": 0.98,
+      "saturation_pct": 102,
+      "temp_k": 100,
+      "tint": 1
+    },
     "look": {
       "contrast_pct": 5,
       "lift": -0.01,
       "gain": 1.0,
-      "color_matrix": [[1.01, 0.0, -0.01], [0.0, 1.0, 0.0], [-0.01, 0.01, 1.01]],
+      "color_matrix": [
+        [
+          1.01,
+          0.0,
+          -0.01
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          -0.01,
+          0.01,
+          1.01
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 37 }
+    "grain": {
+      "metric": "PGI",
+      "value": 37
+    },
+    "grain_extraction": {
+      "strength": 0.35,
+      "radius": 1
+    },
+    "reciprocity_compensation": {
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0,
+      "formula": null,
+      "note": null
+    },
+    "acutance": {
+      "mtf50_cycles_per_mm": 80.6,
+      "strength": 0.28,
+      "radius": 1.2,
+      "amount": 0.392
+    },
+    "ei_adjustment": {
+      "contrast_pct_delta": 0.8,
+      "gamma_delta": 0.005,
+      "grain_strength_mult": 0.894,
+      "lift_delta": 0.0012
+    }
   },
   "notes": "Long straight midtone, soft shoulder, ~12 stops latitude. Do NOT clip highlights aggressively - favor highlight recovery and low contrast over saturation boosts. EI 320 portrait, EI 400 neutral.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "grain": "specified",
+    "curve_gamma": "specified",
+    "latitude_stops": "estimated",
+    "d_min": "specified",
+    "d_max": "specified",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "specified",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "tone_curves_rgb": "specified",
+    "acutance": "specified"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "e4050.pdf"
 }

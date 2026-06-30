@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_ektar_100",
   "name": "Kodak Ektar 100",
   "manufacturer": "Kodak",
@@ -10,47 +10,285 @@
   "monochrome": false,
   "film": {
     "base_iso": 100,
-    "practical_ei_range": [80, 100],
+    "practical_ei_range": [
+      80,
+      100
+    ],
     "recommended_ei": 100,
-    "curve_gamma": 0.69,
-    "latitude_stops": 9,
+    "curve_gamma": 0.569,
+    "latitude_stops": 2.7,
     "color_bias": "slightly cool / magenta-leaning vivid reds",
     "saturation_index": 125,
-    "grain": { "metric": "PGI", "value": 24, "note": "PGI <25 at 4x6 for 135" },
+    "grain": {
+      "metric": "PGI",
+      "value": 25
+    },
     "resolving_power_lp_mm": null,
-    "d_min": 0.20,
-    "d_max": 3.05,
-    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "longer exposures require testing for critical work" }
+    "d_min": 0.566,
+    "d_max": 3.035,
+    "reciprocity": {
+      "no_correction_to_s": 1,
+      "formula": null,
+      "table": null,
+      "note": null,
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0
+    },
+    "datasheet": {
+      "source_pdf": "e4046.pdf",
+      "extracted_at": "2026-06-30T09:25:47+00:00",
+      "document_id": "E-4046",
+      "schema_version": "1.1",
+      "curve_types": [
+        "characteristic_curves",
+        "spectral_dye_density",
+        "spectral_sensitivity"
+      ]
+    },
+    "sensitometry": {
+      "log_exposure_range": [
+        -2.808,
+        1.174
+      ],
+      "curve_log_span": 2.7,
+      "d_min": 0.566,
+      "d_max": 3.035,
+      "curve_gamma": 0.569,
+      "d_min_rgb": [
+        0.844,
+        0.637,
+        0.217
+      ],
+      "d_max_rgb": [
+        3.035,
+        2.392,
+        1.918
+      ],
+      "gamma_rgb": [
+        0.646,
+        0.522,
+        0.539
+      ]
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 16], [96, 108], [192, 222], [255, 248]],
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        42,
+        11
+      ],
+      [
+        85,
+        51
+      ],
+      [
+        128,
+        107
+      ],
+      [
+        170,
+        163
+      ],
+      [
+        212,
+        212
+      ],
+      [
+        255,
+        255
+      ]
+    ],
     "tone_curves_rgb": {
-      "r": [[0, 0], [64, 60], [128, 132], [192, 200], [255, 255]],
-      "g": [[0, 0], [128, 126], [255, 254]],
-      "b": [[0, 8], [64, 66], [128, 122], [192, 184], [255, 244]]
+      "r": [
+        [
+          0,
+          0
+        ],
+        [
+          42,
+          8
+        ],
+        [
+          85,
+          54
+        ],
+        [
+          128,
+          108
+        ],
+        [
+          170,
+          161
+        ],
+        [
+          212,
+          209
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "g": [
+        [
+          0,
+          0
+        ],
+        [
+          42,
+          16
+        ],
+        [
+          85,
+          51
+        ],
+        [
+          128,
+          106
+        ],
+        [
+          170,
+          163
+        ],
+        [
+          212,
+          213
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "b": [
+        [
+          0,
+          0
+        ],
+        [
+          42,
+          8
+        ],
+        [
+          85,
+          47
+        ],
+        [
+          128,
+          106
+        ],
+        [
+          170,
+          164
+        ],
+        [
+          212,
+          215
+        ],
+        [
+          255,
+          255
+        ]
+      ]
     },
     "color_grading": {
       "comment": "Ektar: cool/blue shadows, slight magenta midtones, vivid clean highlights.",
-      "shadows": [-0.006, 0.0, 0.013],
-      "midtones": [0.004, -0.002, 0.004],
-      "highlights": [0.008, 0.002, -0.004]
+      "shadows": [
+        -0.006,
+        0.0,
+        0.013
+      ],
+      "midtones": [
+        0.004,
+        -0.002,
+        0.004
+      ],
+      "highlights": [
+        0.008,
+        0.002,
+        -0.004
+      ]
     },
-    "white_balance": { "temp_k_bias": -100, "tint": 3, "rgb_gains": [1.01, 1.0, 1.03] },
-    "scanner_adjustments": { "highlights": -10, "shadows": -4, "gamma": 1.05, "saturation_pct": 120, "temp_k": -100, "tint": 3 },
+    "white_balance": {
+      "temp_k_bias": -100,
+      "tint": 3,
+      "rgb_gains": [
+        1.01,
+        1.0,
+        1.03
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -10,
+      "shadows": -4,
+      "gamma": 1.05,
+      "saturation_pct": 120,
+      "temp_k": -100,
+      "tint": 3
+    },
     "look": {
       "contrast_pct": 16,
       "lift": -0.03,
       "gain": 1.02,
-      "color_matrix": [[1.02, -0.01, -0.01], [0.0, 1.02, -0.02], [-0.02, 0.01, 1.05]],
+      "color_matrix": [
+        [
+          1.02,
+          -0.01,
+          -0.01
+        ],
+        [
+          0.0,
+          1.02,
+          -0.02
+        ],
+        [
+          -0.02,
+          0.01,
+          1.05
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 24 }
+    "grain": {
+      "metric": "PGI",
+      "value": 25
+    },
+    "grain_extraction": {
+      "strength": 0.2877,
+      "radius": 1
+    },
+    "reciprocity_compensation": {
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0,
+      "formula": null,
+      "note": null
+    }
   },
   "notes": "Highest chroma in the set; steepest central curve. Highlights need tighter control than Portra - avoid clipping vivid reds. EI 80 safe, EI 100 box-speed.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "grain": "specified",
+    "curve_gamma": "specified",
+    "latitude_stops": "specified",
+    "d_min": "specified",
+    "d_max": "specified",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "specified",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "tone_curves_rgb": "specified"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "e4046.pdf"
 }

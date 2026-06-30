@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_gold_200",
   "name": "Kodak Gold 200",
   "manufacturer": "Kodak",
@@ -10,36 +10,146 @@
   "monochrome": false,
   "film": {
     "base_iso": 200,
-    "practical_ei_range": [100, 200],
+    "practical_ei_range": [
+      100,
+      200
+    ],
     "recommended_ei": 160,
     "curve_gamma": 0.63,
     "latitude_stops": 8,
     "color_bias": "warm yellow/red",
     "saturation_index": 112,
-    "grain": { "metric": "PGI", "value": 44 },
+    "grain": {
+      "metric": "PGI",
+      "value": 44
+    },
     "resolving_power_lp_mm": null,
     "d_min": 0.25,
     "d_max": 2.75,
-    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "longer than 1 s: Kodak says to test" }
+    "reciprocity": {
+      "no_correction_to_s": 1,
+      "formula": null,
+      "table": null,
+      "note": null,
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0
+    },
+    "datasheet": {
+      "source_pdf": "E7022 Gold tech sheet.pdf",
+      "extracted_at": "2026-06-30T09:26:03+00:00",
+      "document_id": "E-7022",
+      "schema_version": "1.1",
+      "curve_types": [
+        "spectral_dye_density",
+        "spectral_sensitivity"
+      ]
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 20], [96, 102], [192, 218], [255, 250]],
-    "white_balance": { "temp_k_bias": 350, "tint": 2, "rgb_gains": [1.04, 1.0, 0.97] },
-    "scanner_adjustments": { "highlights": -6, "shadows": -4, "gamma": 1.03, "saturation_pct": 108, "temp_k": 350, "tint": 2 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        20
+      ],
+      [
+        96,
+        102
+      ],
+      [
+        192,
+        218
+      ],
+      [
+        255,
+        250
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": 350,
+      "tint": 2,
+      "rgb_gains": [
+        1.04,
+        1.0,
+        0.97
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -6,
+      "shadows": -4,
+      "gamma": 1.03,
+      "saturation_pct": 108,
+      "temp_k": 350,
+      "tint": 2
+    },
     "look": {
       "contrast_pct": 12,
       "lift": -0.02,
       "gain": 1.03,
-      "color_matrix": [[1.04, 0.0, -0.03], [0.0, 1.0, 0.0], [-0.02, 0.01, 1.01]],
+      "color_matrix": [
+        [
+          1.04,
+          0.0,
+          -0.03
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          -0.02,
+          0.01,
+          1.01
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 44 }
+    "grain": {
+      "metric": "PGI",
+      "value": 44
+    },
+    "grain_extraction": {
+      "strength": 0.3817,
+      "radius": 1
+    },
+    "reciprocity_compensation": {
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0,
+      "formula": null,
+      "note": null
+    },
+    "ei_adjustment": {
+      "contrast_pct_delta": 0.8,
+      "gamma_delta": 0.005,
+      "grain_strength_mult": 0.894,
+      "lift_delta": 0.0012
+    }
   },
   "notes": "Warmer, shorter-shoulder consumer look with early punch. EI 100 for warm/pastel, EI 200 for neutral box-speed.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "grain": "specified",
+    "curve_gamma": "estimated",
+    "latitude_stops": "estimated",
+    "d_min": "estimated",
+    "d_max": "estimated",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "E7022 Gold tech sheet.pdf"
 }

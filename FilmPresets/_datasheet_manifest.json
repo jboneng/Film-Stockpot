@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "description": "Maps FilmStockpot preset ids to extracted datasheet JSON files (sibling to source PDFs).",
+  "default_extracted_dir": "C:/Users/jbone/Desktop/FilmDatasheets",
+  "entries": {
+    "kodak_portra_160": { "extracted_stem": "e4040", "document_id": "E-4040" },
+    "kodak_portra_400": { "extracted_stem": "e4050", "document_id": "E-4050" },
+    "kodak_portra_800": { "extracted_stem": "e4051", "document_id": "E-4051" },
+    "kodak_ektar_100": { "extracted_stem": "e4046", "document_id": "E-4046" },
+    "kodak_gold_200": { "extracted_stem": "E7022 Gold tech sheet", "document_id": "E-7022" },
+    "kodak_ultramax_400": { "extracted_stem": "KodakUltraMax400TechSheet-1", "document_id": null },
+    "fuji_c200": { "extracted_stem": "films_c200_datasheet_01", "document_id": null },
+    "fujifilm_200": { "extracted_stem": "fujifilm-200-speed-film_data-sheet", "document_id": null },
+    "fujifilm_400": { "extracted_stem": "datasheet_fujifilm400_01", "document_id": null },
+    "fuji_pro_400h": { "extracted_stem": "films_pro-400h_datasheet_01", "document_id": null },
+    "fuji_superia_xtra_400": { "extracted_stem": "films_superia-xtra400_datasheet_01", "document_id": null },
+    "fuji_natura_1600": { "extracted_stem": "datasheet_natura1600_01", "document_id": null },
+    "ilford_hp5_plus": { "extracted_stem": "HP5+ technical data sheet Nov. 18", "document_id": null },
+    "ilford_delta_3200": { "extracted_stem": "DELTA 3200 technical data sheet F25", "document_id": null },
+    "kodak_tmax_100": { "extracted_stem": "f4016_TMax_100", "document_id": null },
+    "kodak_tmax_400": { "extracted_stem": "f4043_tmax_400", "document_id": null },
+    "kodak_trix_400": { "extracted_stem": "f4017_trix_320400", "document_id": null },
+    "harman_phoenix_ii": { "extracted_stem": "Phoenix_II_data_sheet_G25B", "document_id": null }
+  }
+}

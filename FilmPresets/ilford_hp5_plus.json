@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "ilford_hp5_plus",
   "name": "Ilford HP5 Plus",
   "manufacturer": "Ilford",
@@ -10,43 +10,119 @@
   "monochrome": true,
   "film": {
     "base_iso": 400,
-    "practical_ei_range": [400, 3200],
+    "practical_ei_range": [
+      400,
+      3200
+    ],
     "recommended_ei": 400,
-    "curve_gamma": 0.60,
+    "curve_gamma": 0.6,
     "curve_gamma_note": "for Ilfotec HC (1+31), 6.5 min at 20C",
     "latitude_stops": 12,
     "color_bias": "monochrome",
     "saturation_index": null,
-    "grain": { "metric": null, "value": null, "note": "no current official RMS scalar published" },
+    "grain": {
+      "metric": null,
+      "value": null,
+      "note": "no current official RMS scalar published"
+    },
     "resolving_power_lp_mm": null,
-    "d_min": 0.10,
-    "d_max": 2.10,
+    "d_min": 0.1,
+    "d_max": 2.1,
     "reciprocity": {
       "no_correction_to_s": 0.5,
       "formula": "Ta = Tm^1.31",
       "table": null,
-      "note": "no correction from 1/10000 s to 1/2 s; thereafter use the formula"
+      "note": "no correction from 1/10000 s to 1/2 s; thereafter use the formula",
+      "assumed_exposure_s": 1.0,
+      "correction_exponent": 1.31,
+      "toe_lift": 0.025
+    },
+    "datasheet": {
+      "source_pdf": "HP5+ technical data sheet Nov. 18.pdf",
+      "extracted_at": "2026-06-30T09:27:02+00:00",
+      "document_id": null,
+      "schema_version": "1.1",
+      "curve_types": []
     }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 18], [96, 100], [192, 220], [255, 248]],
-    "white_balance": { "temp_k_bias": 0, "tint": 0, "rgb_gains": [1.0, 1.0, 1.0] },
-    "scanner_adjustments": { "highlights": -6, "shadows": 6, "gamma": 1.03, "saturation_pct": 0, "temp_k": 0, "tint": 0, "local_contrast_pct": 10 },
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        18
+      ],
+      [
+        96,
+        100
+      ],
+      [
+        192,
+        220
+      ],
+      [
+        255,
+        248
+      ]
+    ],
+    "white_balance": {
+      "temp_k_bias": 0,
+      "tint": 0,
+      "rgb_gains": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -6,
+      "shadows": 6,
+      "gamma": 1.03,
+      "saturation_pct": 0,
+      "temp_k": 0,
+      "tint": 0,
+      "local_contrast_pct": 10
+    },
     "look": {
       "contrast_pct": 14,
       "lift": -0.04,
       "gain": 1.0,
       "color_matrix": null,
-      "mono_mixer": [0.30, 0.59, 0.11]
+      "mono_mixer": [
+        0.3,
+        0.59,
+        0.11
+      ]
     },
-    "grain": { "metric": null, "value": null }
+    "grain": {
+      "metric": null,
+      "value": null
+    },
+    "reciprocity_compensation": {
+      "assumed_exposure_s": 1.0,
+      "correction_exponent": 1.31,
+      "toe_lift": 0.025,
+      "formula": "Ta = Tm^1.31"
+    }
   },
   "notes": "Monochrome: apply the panchromatic mono mixer (R 0.30 / G 0.59 / B 0.11) BEFORE grain and curve treatment, then saturation is forced to 0. Tonal curve and grain dominate the look far more than any channel nuance. EI 400 normal; EI 800/1600 push; EI 3200 emergency/high-grit. Most flexible pushable stock in the set.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "practical_ei_range": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "grain": "unspecified", "resolving_power_lp_mm": "unspecified",
-    "mono_mixer": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "practical_ei_range": "specified",
+    "curve_gamma": "estimated",
+    "latitude_stops": "estimated",
+    "d_min": "estimated",
+    "d_max": "estimated",
+    "grain": "unspecified",
+    "resolving_power_lp_mm": "unspecified",
+    "mono_mixer": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "HP5+ technical data sheet Nov. 18.pdf"
 }

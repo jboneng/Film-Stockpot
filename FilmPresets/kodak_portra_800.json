@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "kodak_portra_800",
   "name": "Kodak Portra 800",
   "manufacturer": "Kodak",
@@ -10,47 +10,215 @@
   "monochrome": false,
   "film": {
     "base_iso": 800,
-    "practical_ei_range": [500, 800],
+    "practical_ei_range": [
+      500,
+      800
+    ],
     "recommended_ei": 640,
-    "curve_gamma": 0.63,
+    "curve_gamma": 0.1,
     "latitude_stops": 12.5,
     "color_bias": "neutral with slightly cooler shadows",
     "saturation_index": 110,
-    "grain": { "metric": "PGI", "value": 48 },
+    "grain": {
+      "metric": "PGI",
+      "value": 28
+    },
     "resolving_power_lp_mm": null,
-    "d_min": 0.35,
-    "d_max": 2.95,
-    "reciprocity": { "no_correction_to_s": 1, "formula": null, "table": null, "note": "longer exposures require testing; official pushed curves shown at EI 1600 and 3200" }
+    "d_min": 0.054,
+    "d_max": 3.68,
+    "reciprocity": {
+      "no_correction_to_s": 1,
+      "formula": null,
+      "table": null,
+      "note": "longer exposures require testing; official pushed curves shown at EI 1600 and 3200",
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0
+    },
+    "datasheet": {
+      "source_pdf": "e4051.pdf",
+      "extracted_at": "2026-06-30T09:26:00+00:00",
+      "document_id": "E-4051",
+      "schema_version": "1.1",
+      "curve_types": [
+        "characteristic_curves",
+        "mtf",
+        "spectral_dye_density",
+        "spectral_sensitivity"
+      ]
+    },
+    "sensitometry": {
+      "log_exposure_range": [
+        -3.987,
+        0.975
+      ],
+      "curve_log_span": 0.0,
+      "d_min": 0.054,
+      "d_max": 3.68,
+      "curve_gamma": 0.1
+    }
   },
   "pipeline": {
-    "tone_curve_8bit": [[0, 0], [32, 24], [96, 104], [192, 214], [255, 251]],
+    "tone_curve_8bit": [
+      [
+        0,
+        0
+      ],
+      [
+        32,
+        24
+      ],
+      [
+        96,
+        104
+      ],
+      [
+        192,
+        214
+      ],
+      [
+        255,
+        251
+      ]
+    ],
     "tone_curves_rgb": {
-      "r": [[0, 2], [128, 132], [255, 254]],
-      "g": [[0, 0], [128, 128], [255, 255]],
-      "b": [[0, 9], [64, 66], [128, 124], [192, 186], [255, 246]]
+      "r": [
+        [
+          0,
+          139
+        ],
+        [
+          42,
+          181
+        ],
+        [
+          85,
+          90
+        ],
+        [
+          128,
+          24
+        ],
+        [
+          170,
+          70
+        ],
+        [
+          212,
+          122
+        ],
+        [
+          255,
+          0
+        ]
+      ]
     },
     "color_grading": {
       "comment": "Portra 800: noticeably cooler shadows, warm highlights, slightly denser.",
-      "shadows": [-0.004, 0.0, 0.011],
-      "midtones": [0.005, 0.001, -0.002],
-      "highlights": [0.01, 0.005, -0.008]
+      "shadows": [
+        -0.004,
+        0.0,
+        0.011
+      ],
+      "midtones": [
+        0.005,
+        0.001,
+        -0.002
+      ],
+      "highlights": [
+        0.01,
+        0.005,
+        -0.008
+      ]
     },
-    "white_balance": { "temp_k_bias": -50, "tint": 2, "rgb_gains": [1.0, 1.0, 1.02] },
-    "scanner_adjustments": { "highlights": -8, "shadows": -3, "gamma": 1.0, "saturation_pct": 110, "temp_k": -50, "tint": 2 },
+    "white_balance": {
+      "temp_k_bias": -50,
+      "tint": 2,
+      "rgb_gains": [
+        1.0,
+        1.0,
+        1.02
+      ]
+    },
+    "scanner_adjustments": {
+      "highlights": -8,
+      "shadows": -3,
+      "gamma": 1.0,
+      "saturation_pct": 110,
+      "temp_k": -50,
+      "tint": 2
+    },
     "look": {
       "contrast_pct": 8,
       "lift": -0.02,
       "gain": 1.01,
-      "color_matrix": [[1.01, -0.01, 0.0], [0.0, 1.0, -0.01], [-0.02, 0.01, 1.03]],
+      "color_matrix": [
+        [
+          1.01,
+          -0.01,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          -0.01
+        ],
+        [
+          -0.02,
+          0.01,
+          1.03
+        ]
+      ],
       "mono_mixer": null
     },
-    "grain": { "metric": "PGI", "value": 48 }
+    "grain": {
+      "metric": "PGI",
+      "value": 28
+    },
+    "grain_extraction": {
+      "strength": 0.3045,
+      "radius": 1
+    },
+    "reciprocity_compensation": {
+      "no_correction_range_s": [
+        0.0001,
+        1.0
+      ],
+      "assumed_exposure_s": 0.008,
+      "toe_lift": 0.0,
+      "formula": null
+    },
+    "acutance": {
+      "mtf50_cycles_per_mm": 99.6,
+      "strength": 0.28,
+      "radius": 1.2,
+      "amount": 0.392
+    },
+    "ei_adjustment": {
+      "contrast_pct_delta": 0.8,
+      "gamma_delta": 0.005,
+      "grain_strength_mult": 0.894,
+      "lift_delta": 0.0012
+    }
   },
   "notes": "Longest latitude in the set (~12.5 stops), slightly cooler shadows. Like Portra 400, protect highlights rather than over-saturate. EI 500-640 dense, EI 800 box speed.",
   "confidence": {
-    "base_iso": "specified", "reciprocity": "specified", "grain": "specified",
-    "curve_gamma": "estimated", "latitude_stops": "estimated", "d_min": "estimated", "d_max": "estimated",
-    "saturation_index": "inferred", "tone_curve_8bit": "inferred", "scanner_adjustments": "inferred", "look": "inferred"
+    "base_iso": "specified",
+    "reciprocity": "specified",
+    "grain": "specified",
+    "curve_gamma": "estimated",
+    "latitude_stops": "estimated",
+    "d_min": "estimated",
+    "d_max": "estimated",
+    "saturation_index": "inferred",
+    "tone_curve_8bit": "inferred",
+    "scanner_adjustments": "inferred",
+    "look": "inferred",
+    "tone_curves_rgb": "specified",
+    "acutance": "specified"
   },
-  "source": "Documents/film-stock-report.md"
+  "source": "e4051.pdf"
 }
