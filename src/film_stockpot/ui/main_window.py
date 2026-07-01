@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 from film_stockpot import __version__
 from film_stockpot.export_naming import ExportNamingContext, render_export_name
 from film_stockpot.image.folder import list_tiff_files
-from film_stockpot.image.io import PreviewImageBuffer, compute_histograms, load_image_array
+from film_stockpot.image.io import PreviewImageBuffer, compute_histograms, compute_luma_histogram, load_image_array
 from film_stockpot.image.grading import (
     GRADING_NEUTRAL,
     grading_is_neutral,
@@ -961,8 +961,10 @@ class MainWindow(QMainWindow):
     def _on_preview_ready(self, full: np.ndarray | None) -> None:
         if full is None:
             self._histogram.clear()
+            self._grading_panel.set_luma_histogram(None)
         else:
             self._schedule_histogram(full)
+            self._grading_panel.set_luma_histogram(compute_luma_histogram(full))
         self._refresh_preview_view()
         self._update_perf_overlay()
 

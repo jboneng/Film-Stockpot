@@ -195,6 +195,9 @@ class GradingPanel(QWidget):
 
         self._curve_editor.set_curves(values.get("curves"))
 
+    def set_luma_histogram(self, hist: np.ndarray | None) -> None:
+        self._curve_editor.set_luma_histogram(hist)
+
     def reset(self) -> None:
         self.set_settings(GRADING_NEUTRAL)
         self.changed.emit()

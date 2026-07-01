@@ -5,6 +5,7 @@ import numpy as np
 from film_stockpot.image.curves import (
     CURVES_NEUTRAL,
     apply_curves,
+    bezier_segments,
     build_curve_lut,
     curves_is_neutral,
     evaluate_curve,
@@ -12,6 +13,7 @@ from film_stockpot.image.curves import (
     normalize_curve_points,
     normalize_curves,
 )
+from film_stockpot.image.io import compute_luma_histogram
 from film_stockpot.image.grading import (
     GRADING_NEUTRAL,
     apply_grading_after_scanner,
@@ -69,7 +71,26 @@ def test_build_curve_lut_is_monotonic_for_monotonic_points() -> None:
 
 def test_evaluate_curve_interpolates_between_points() -> None:
     points = [[0.0, 0.0], [1.0, 1.0]]
-    assert evaluate_curve(points, 0.25) == 0.25
+    assert abs(evaluate_curve(points, 0.25) - 0.25) < 0.02
+
+
+def test_bezier_curve_bends_toward_middle_point() -> None:
+    points = [[0.0, 0.0], [0.5, 0.8], [1.0, 1.0]]
+    assert evaluate_curve(points, 0.25) > 0.25
+    assert abs(evaluate_curve(points, 0.5) - 0.8) < 0.05
+
+
+def test_bezier_segments_returns_one_segment_per_span() -> None:
+    points = [[0.0, 0.0], [0.5, 0.5], [1.0, 1.0]]
+    assert len(bezier_segments(points)) == 2
+
+
+def test_compute_luma_histogram_from_gray_image() -> None:
+    rgb = np.full((4, 4, 3), 0.5, dtype=np.float32)
+    hist = compute_luma_histogram(rgb)
+    assert hist is not None
+    assert hist.shape == (256,)
+    assert float(hist.sum()) == 16.0
 
 
 def test_grading_neutral_includes_curves() -> None:

@@ -70,6 +70,16 @@ def compute_histograms(rgb: np.ndarray, *, bins: int = 256) -> np.ndarray | None
     return hist
 
 
+def compute_luma_histogram(rgb: np.ndarray, *, bins: int = 256) -> np.ndarray | None:
+    """Return a luminance histogram for a float32 RGB image."""
+    if rgb is None or rgb.ndim != 3 or rgb.shape[2] < 3:
+        return None
+    weights = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    luma = np.sum(np.clip(rgb, 0.0, 1.0) * weights, axis=-1)
+    counts, _ = np.histogram(luma.ravel(), bins=bins, range=(0.0, 1.0))
+    return counts.astype(np.float64)
+
+
 class PreviewImageBuffer:
     """Reusable uint8 buffer for preview display conversion."""
 

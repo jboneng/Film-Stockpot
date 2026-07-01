@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import copy
 
-from PyQt6.QtCore import QPointF, Qt, pyqtSignal
+import numpy as np
+from PyQt6.QtCore import QPointF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPainterPath, QPen
 from PyQt6.QtWidgets import (
     QButtonGroup,
@@ -18,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from film_stockpot.image.curves import (
     CURVES_NEUTRAL,
+    bezier_segments,
     evaluate_curve,
     normalize_curve_points,
     normalize_curves,
@@ -33,6 +35,7 @@ _CHANNEL_COLORS = {
 _MARGIN = 24
 _HIT_RADIUS = 8.0
 _MIN_POINTS = 3
+_PREVIEW_DEBOUNCE_MS = 16
 
 _TOGGLE_STYLE = """
 QToolButton {
@@ -69,14 +72,24 @@ class _CurveCanvas(QWidget):
         super().__init__(parent)
         self._channel = "L"
         self._points: list[list[float]] = [point[:] for point in CURVES_NEUTRAL["L"]]
+        self._luma_hist: np.ndarray | None = None
         self._drag_index: int | None = None
         self._hover_index: int | None = None
         self.setMinimumHeight(180)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMouseTracking(True)
 
+        self._change_timer = QTimer(self)
+        self._change_timer.setSingleShot(True)
+        self._change_timer.setInterval(_PREVIEW_DEBOUNCE_MS)
+        self._change_timer.timeout.connect(self.changed.emit)
+
     def set_channel(self, channel: str) -> None:
         self._channel = channel if channel in _CHANNEL_COLORS else "L"
+        self.update()
+
+    def set_luma_histogram(self, hist: np.ndarray | None) -> None:
+        self._luma_hist = hist
         self.update()
 
     def set_points(self, points: list[list[float]]) -> None:
@@ -119,6 +132,14 @@ class _CurveCanvas(QWidget):
                 best_index = index
         return best_index
 
+    def _notify_changed(self, *, immediate: bool = False) -> None:
+        self.update()
+        if immediate:
+            self._change_timer.stop()
+            self.changed.emit()
+        elif not self._change_timer.isActive():
+            self._change_timer.start()
+
     def _insert_point(self, x: float, y: float) -> None:
         x = float(max(0.0, min(1.0, x)))
         y = float(max(0.0, min(1.0, y)))
@@ -127,7 +148,7 @@ class _CurveCanvas(QWidget):
                 return
         self._points.append([x, y])
         self._points = normalize_curve_points(self._points)
-        self.changed.emit()
+        self._notify_changed(immediate=True)
 
     def _delete_point(self, index: int) -> None:
         if index <= 0 or index >= len(self._points) - 1:
@@ -136,7 +157,7 @@ class _CurveCanvas(QWidget):
             return
         del self._points[index]
         self._points = normalize_curve_points(self._points)
-        self.changed.emit()
+        self._notify_changed(immediate=True)
 
     def _move_point(self, index: int, x: float, y: float) -> None:
         if index == 0:
@@ -150,7 +171,47 @@ class _CurveCanvas(QWidget):
             y = float(max(0.0, min(1.0, y)))
             self._points[index] = [x, y]
         self._points = normalize_curve_points(self._points)
-        self.changed.emit()
+        self._notify_changed(immediate=False)
+
+    def _draw_luma_histogram(self, painter: QPainter) -> None:
+        if self._luma_hist is None:
+            return
+        left, top, width, height = self._plot_rect()
+        data = self._luma_hist.astype(np.float64)
+        peak = float(data.max())
+        if peak <= 0.0:
+            return
+        data = data / peak
+
+        path = QPainterPath()
+        path.moveTo(left, top + height)
+        bins = data.shape[0]
+        for index, value in enumerate(data):
+            x = left + width * index / max(bins - 1, 1)
+            y = top + height - value * height
+            path.lineTo(x, y)
+        path.lineTo(left + width, top + height)
+        path.closeSubpath()
+
+        fill = QColor(220, 220, 228, 42)
+        painter.fillPath(path, fill)
+
+    def _curve_path(self) -> QPainterPath:
+        path = QPainterPath()
+        segments = bezier_segments(self._points)
+        if not segments:
+            return path
+
+        p0, cp1, cp2, p3 = segments[0]
+        path.moveTo(self._to_widget(p0[0], p0[1]))
+        for segment in segments:
+            p0, cp1, cp2, p3 = segment
+            path.cubicTo(
+                self._to_widget(cp1[0], cp1[1]),
+                self._to_widget(cp2[0], cp2[1]),
+                self._to_widget(p3[0], p3[1]),
+            )
+        return path
 
     def paintEvent(self, _event) -> None:  # noqa: N802
         painter = QPainter(self)
@@ -167,6 +228,8 @@ class _CurveCanvas(QWidget):
         painter.setPen(QPen(border_color, 1))
         painter.drawRect(left, top, width, height)
 
+        self._draw_luma_histogram(painter)
+
         for step in (0.25, 0.5, 0.75):
             gx = left + step * width
             gy = top + step * height
@@ -179,18 +242,8 @@ class _CurveCanvas(QWidget):
         painter.setPen(QPen(guide_color, 1, Qt.PenStyle.DashLine))
         painter.drawLine(guide_start, guide_end)
 
-        path = QPainterPath()
-        samples = 128
-        for sample in range(samples + 1):
-            x = sample / samples
-            y = evaluate_curve(self._points, x)
-            point = self._to_widget(x, y)
-            if sample == 0:
-                path.moveTo(point)
-            else:
-                path.lineTo(point)
         painter.setPen(QPen(curve_color, 2.0))
-        painter.drawPath(path)
+        painter.drawPath(self._curve_path())
 
         for index, (x, y) in enumerate(self._points):
             center = self._to_widget(x, y)
@@ -218,11 +271,11 @@ class _CurveCanvas(QWidget):
             event.accept()
             return
 
-        left, top, width, height = self._plot_rect()
-        if not (left <= pos.x() <= left + width and top <= pos.y() <= top + height):
+        left, top, plot_width, plot_height = self._plot_rect()
+        if not (left <= pos.x() <= left + plot_width and top <= pos.y() <= top + plot_height):
             return
 
-        x, y = self._from_widget(pos)
+        x, _y = self._from_widget(pos)
         curve_y = evaluate_curve(self._points, x)
         self._insert_point(x, curve_y)
         self._drag_index = self._point_index_at(self._to_widget(x, curve_y))
@@ -237,13 +290,16 @@ class _CurveCanvas(QWidget):
             event.accept()
             return
 
-        self._hover_index = self._point_index_at(pos)
-        self.update()
+        hover = self._point_index_at(pos)
+        if hover != self._hover_index:
+            self._hover_index = hover
+            self.update()
         event.accept()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802
         if event.button() == Qt.MouseButton.LeftButton and self._drag_index is not None:
             self._drag_index = None
+            self._notify_changed(immediate=True)
             self.interaction_changed.emit(False)
             event.accept()
 
@@ -327,6 +383,9 @@ class CurveEditorWidget(QWidget):
     def set_curves(self, curves: dict | None) -> None:
         self._curves = normalize_curves(curves)
         self._canvas.set_points(self._curves[self._channel])
+
+    def set_luma_histogram(self, hist: np.ndarray | None) -> None:
+        self._canvas.set_luma_histogram(hist)
 
     def reset(self) -> None:
         self.set_curves(CURVES_NEUTRAL)
