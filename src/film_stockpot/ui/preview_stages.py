@@ -11,7 +11,7 @@ from film_stockpot.image.pipeline import (
     apply_film_preset,
     apply_pre_neutralize_input_transform,
 )
-from film_stockpot.image.scanner import apply_scanner_adjustments
+from film_stockpot.image.grading import apply_interactive_adjustments
 
 
 class PreviewStage(StrEnum):
@@ -40,5 +40,5 @@ def compute_pre_neutralize(flat: np.ndarray, base: dict | None) -> np.ndarray:
 
 
 def compute_full_graded(film: np.ndarray, adjustments: dict | None) -> np.ndarray:
-    """Return the film-stock image with Frontier-style operator adjustments."""
-    return apply_scanner_adjustments(film, adjustments)
+    """Return the film-stock image with operator and wheel grading adjustments."""
+    return apply_interactive_adjustments(film, adjustments)

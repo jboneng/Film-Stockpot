@@ -183,6 +183,10 @@ class HistogramWidget(QWidget):
     def _canvas_set_log(self, checked: bool) -> None:
         self._canvas.set_log(checked)
 
+    def set_histograms(self, hist: np.ndarray | None) -> None:
+        """Display precomputed per-channel histogram counts."""
+        self._canvas.set_histograms(hist)
+
     def set_image(self, rgb: np.ndarray | None) -> None:
         """Compute and display histograms for a float32 RGB image (0..1)."""
         if rgb is None or rgb.ndim != 3 or rgb.shape[2] < 3:

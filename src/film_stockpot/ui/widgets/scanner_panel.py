@@ -21,11 +21,13 @@ class ScannerPanel(QWidget):
     """Frontier-familiar controls that emit ``changed`` on every adjustment."""
 
     changed = pyqtSignal()
+    interaction_changed = pyqtSignal(bool)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._sliders: dict[str, QSlider] = {}
         self._value_labels: dict[str, QLabel] = {}
+        self._interaction_depth = 0
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -99,6 +101,8 @@ class ScannerPanel(QWidget):
         slider.setRange(low, high)
         slider.setValue(0)
         slider.valueChanged.connect(lambda value, lbl=value_label: self._on_slider_changed(value, lbl))
+        slider.sliderPressed.connect(self._begin_interaction)
+        slider.sliderReleased.connect(self._end_interaction)
         row.addWidget(slider)
 
         self._sliders[key] = slider
@@ -108,6 +112,16 @@ class ScannerPanel(QWidget):
     def _on_slider_changed(self, value: int, value_label: QLabel) -> None:
         value_label.setText(str(value))
         self.changed.emit()
+
+    def _begin_interaction(self) -> None:
+        if self._interaction_depth == 0:
+            self.interaction_changed.emit(True)
+        self._interaction_depth += 1
+
+    def _end_interaction(self) -> None:
+        self._interaction_depth = max(0, self._interaction_depth - 1)
+        if self._interaction_depth == 0:
+            self.interaction_changed.emit(False)
 
     def settings(self) -> dict:
         values = {key: slider.value() for key, slider in self._sliders.items()}

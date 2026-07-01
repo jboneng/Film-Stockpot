@@ -35,13 +35,22 @@ NEUTRAL: dict = {
 }
 
 
-def apply_scanner_adjustments(rgb: np.ndarray, settings: dict | None = None) -> np.ndarray:
+def apply_scanner_adjustments(
+    rgb: np.ndarray,
+    settings: dict | None = None,
+    *,
+    preview_fast: bool = False,
+) -> np.ndarray:
     """Apply Frontier-style operator adjustments to a float32 RGB image (0..1).
 
+    When ``preview_fast`` is True, sharpness is skipped for cheaper live preview.
     Neutral settings return the input unchanged. The input is never modified.
     """
     values = {**NEUTRAL, **(settings or {})}
-    image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
+    if rgb.dtype != np.float32 or not rgb.flags.writeable:
+        image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
+    else:
+        image = np.clip(rgb, 0.0, 1.0)
 
     density = float(values["density"])
     if density != 0.0:
@@ -82,7 +91,7 @@ def apply_scanner_adjustments(rgb: np.ndarray, settings: dict | None = None) -> 
         image = np.clip(luma + (image - luma) * factor, 0.0, 1.0)
 
     sharpness = float(values["sharpness"])
-    if sharpness > 0.0:
+    if sharpness > 0.0 and not preview_fast:
         image = _unsharp_mask(image, sharpness * 0.12)
 
     return np.clip(image, 0.0, 1.0).astype(np.float32)

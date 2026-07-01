@@ -58,6 +58,43 @@ def load_image_array(path: str | Path) -> np.ndarray:
     return np.ascontiguousarray(data, dtype=np.float32)
 
 
+def compute_histograms(rgb: np.ndarray, *, bins: int = 256) -> np.ndarray | None:
+    """Return per-channel histogram counts for a float32 RGB image."""
+    if rgb is None or rgb.ndim != 3 or rgb.shape[2] < 3:
+        return None
+    data = np.clip(rgb, 0.0, 1.0)
+    hist = np.empty((3, bins), dtype=np.float64)
+    for channel in range(3):
+        counts, _ = np.histogram(data[:, :, channel], bins=bins, range=(0.0, 1.0))
+        hist[channel] = counts
+    return hist
+
+
+class PreviewImageBuffer:
+    """Reusable uint8 buffer for preview display conversion."""
+
+    __slots__ = ("_rgb", "_uint8", "_image")
+
+    def __init__(self) -> None:
+        self._rgb: np.ndarray | None = None
+        self._uint8: np.ndarray | None = None
+        self._image: QImage | None = None
+
+    def to_qimage(self, rgb: np.ndarray) -> QImage:
+        clipped = np.clip(rgb, 0.0, 1.0)
+        height, width = clipped.shape[:2]
+        if self._uint8 is None or self._uint8.shape != clipped.shape:
+            self._uint8 = np.empty((height, width, 3), dtype=np.uint8)
+        np.copyto(self._uint8, (clipped * 255.0 + 0.5).astype(np.uint8))
+        return QImage(
+            self._uint8.data,
+            width,
+            height,
+            width * 3,
+            QImage.Format.Format_RGB888,
+        ).copy()
+
+
 def array_to_qimage(rgb: np.ndarray) -> QImage:
     """Convert a float32 RGB array (0..1) to an 8-bit RGB888 QImage for display."""
     clipped = np.clip(rgb, 0.0, 1.0)

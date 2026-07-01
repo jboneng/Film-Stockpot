@@ -6,9 +6,11 @@ from PyQt6.QtWidgets import QApplication
 from pathlib import Path
 
 from film_stockpot import __version__
+from film_stockpot.image.grading import GRADING_NEUTRAL
 from film_stockpot.image.scanner import NEUTRAL
 from film_stockpot.ui.main_window import MainWindow
 from film_stockpot.ui.widgets.film_strip import FilmStripPanel
+from film_stockpot.ui.widgets.grading_panel import GradingPanel
 from film_stockpot.ui.widgets.image_viewer import ImageViewer
 from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
 
@@ -35,6 +37,31 @@ def test_scanner_panel_set_settings_does_not_emit_changed(qapp: QApplication) ->
     fired = []
     panel.changed.connect(lambda: fired.append(True))
     panel.set_settings({**NEUTRAL, "density": 3})
+    assert fired == []
+
+
+def test_grading_panel_set_settings_round_trips(qapp: QApplication) -> None:
+    panel = GradingPanel()
+    grading = {
+        **GRADING_NEUTRAL,
+        "shadows": {"hue": 30.0, "sat": 0.6, "lum": -12},
+        "blending": 40,
+        "balance": 15,
+    }
+    panel.set_settings(grading)
+    result = panel.settings()["grading"]
+    assert result["shadows"]["hue"] == 30.0
+    assert result["shadows"]["sat"] == 0.6
+    assert result["shadows"]["lum"] == -12
+    assert result["blending"] == 40
+    assert result["balance"] == 15
+
+
+def test_grading_panel_set_settings_does_not_emit_changed(qapp: QApplication) -> None:
+    panel = GradingPanel()
+    fired = []
+    panel.changed.connect(lambda: fired.append(True))
+    panel.set_settings(GRADING_NEUTRAL)
     assert fired == []
 
 

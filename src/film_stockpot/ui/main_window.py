@@ -30,7 +30,12 @@ from PyQt6.QtWidgets import (
 from film_stockpot import __version__
 from film_stockpot.export_naming import ExportNamingContext, render_export_name
 from film_stockpot.image.folder import list_tiff_files
-from film_stockpot.image.io import array_to_qimage, load_image_array
+from film_stockpot.image.io import PreviewImageBuffer, compute_histograms, load_image_array
+from film_stockpot.image.grading import (
+    GRADING_NEUTRAL,
+    grading_is_neutral,
+    has_grading_adjustments,
+)
 from film_stockpot.image.crosstalk import (
     CROSSTALK_DEFAULT,
     CROSSTALK_MAX,
@@ -51,11 +56,16 @@ from film_stockpot.sidecar import (
     read_sidecar,
     write_sidecar,
 )
-from film_stockpot.ui.preview_stages import (
-    PreviewStage,
-    compute_base_graded,
-    compute_full_graded,
-    compute_pre_neutralize,
+from film_stockpot.ui.preview_stages import PreviewStage
+from film_stockpot.ui.gpu import GpuGradingBackend
+from film_stockpot.ui.preview_engine import PreviewEngine, downscale_for_preview
+from film_stockpot.ui.preview_settings import (
+    drag_preview_max_long_edge,
+    gpu_acceleration_enabled,
+    live_histogram_enabled,
+    preview_max_long_edge,
+    set_gpu_acceleration,
+    show_perf_overlay,
 )
 from film_stockpot.ui.recent_folders import last_folder, load_recent_folders, remember_folder
 from film_stockpot.ui.icons import load_icon
@@ -65,8 +75,15 @@ from film_stockpot.ui.widgets.film_strip import FilmStripPanel
 from film_stockpot.ui.widgets.histogram import HistogramWidget
 from film_stockpot.ui.widgets.image_viewer import ImageViewer
 from film_stockpot.ui.widgets.preview_mode_bar import PreviewModeBar
+from film_stockpot.ui.widgets.grading_panel import GradingPanel
 from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
-from film_stockpot.ui.workers import ApplyPresetWorker, BatchExportWorker, ExportOneWorker
+from film_stockpot.ui.workers import (
+    ApplyPresetWorker,
+    BatchExportWorker,
+    ExportOneWorker,
+    GradingWorker,
+    ScannerAdjustWorker,
+)
 
 
 class MainWindow(QMainWindow):
@@ -74,8 +91,9 @@ class MainWindow(QMainWindow):
 
     _SAVE_TIFF_FILTER = "TIFF Images (*.tif *.tiff)"
     _PRESET_ROLE = Qt.ItemDataRole.UserRole
-    _PREVIEW_MAX = 1800
     _LIVE_DEBOUNCE_MS = 15
+    _WHEEL_DEBOUNCE_MS = 8
+    _HIST_DEFER_MS = 150
     _PRESET_DEBOUNCE_MS = 200
     _CROSSTALK_DEBOUNCE_MS = 80
     _SIDECAR_DEBOUNCE_MS = 500
@@ -85,14 +103,22 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Film Stockpot {__version__}")
 
         self._original_rgb: np.ndarray | None = None
-        self._preview_original: np.ndarray | None = None
-        self._preview_base_graded: np.ndarray | None = None
-        self._preview_pre_neutralize: np.ndarray | None = None
         self._current_path: str | None = None
         self._adjust_base: np.ndarray | None = None
-        self._preview_base: np.ndarray | None = None
         self._exporting_single = False
         self._apply_generation = 0
+        self._preview_generation = 0
+        self._preview_interacting = False
+        self._preview_interaction_depth = 0
+        self._grading_worker_busy = False
+        self._grading_worker_pending = False
+        self._pending_hist_rgb: np.ndarray | None = None
+        self._preview_engine = PreviewEngine(
+            preview_max=preview_max_long_edge(),
+            drag_preview_max=drag_preview_max_long_edge(),
+            gpu_backend=GpuGradingBackend(),
+        )
+        self._preview_image = PreviewImageBuffer()
         self._active_base: dict | None = None
         self._external_preset_active = False
         self._restoring = False
@@ -134,16 +160,41 @@ class MainWindow(QMainWindow):
         self._crosstalk_timer.setSingleShot(True)
         self._crosstalk_timer.timeout.connect(self._apply_crosstalk_only)
 
+        self._hist_timer = QTimer(self)
+        self._hist_timer.setSingleShot(True)
+        self._hist_timer.timeout.connect(self._apply_deferred_histogram)
+
         self._sidecar_timer = QTimer(self)
         self._sidecar_timer.setSingleShot(True)
         self._sidecar_timer.timeout.connect(self._save_sidecar)
 
+        self._build_menu()
         self._build_toolbar()
         self._build_film_strip()
         self._build_panel()
         self._populate_presets()
         self._update_actions_enabled()
         self._try_restore_last_folder()
+
+        self._perf_label = QLabel("", self)
+        self.statusBar().addPermanentWidget(self._perf_label)
+        self._update_perf_overlay()
+
+    def _build_menu(self) -> None:
+        view_menu = self.menuBar().addMenu("View")
+
+        self._gpu_action = QAction("GPU acceleration", self)
+        self._gpu_action.setCheckable(True)
+        self._gpu_action.setChecked(gpu_acceleration_enabled())
+        self._gpu_action.setToolTip("Use OpenGL for live wheel grading when available")
+        self._gpu_action.triggered.connect(self._toggle_gpu_acceleration)
+        view_menu.addAction(self._gpu_action)
+
+        self._perf_action = QAction("Show preview timing", self)
+        self._perf_action.setCheckable(True)
+        self._perf_action.setChecked(show_perf_overlay())
+        self._perf_action.triggered.connect(self._toggle_perf_overlay)
+        view_menu.addAction(self._perf_action)
 
     def _build_toolbar(self) -> None:
         toolbar = QToolBar("Main", self)
@@ -190,6 +241,7 @@ class MainWindow(QMainWindow):
     def _build_panel(self) -> None:
         self._panel = ScannerPanel(self)
         self._panel.changed.connect(self._schedule_live_update)
+        self._panel.interaction_changed.connect(self._on_preview_interaction)
 
         self._combo = QComboBox(self)
 
@@ -219,6 +271,8 @@ class MainWindow(QMainWindow):
             "Spectral crosstalk correction: 0 = off, 0.5 = default, 1 = full matrix"
         )
         self._crosstalk_slider.valueChanged.connect(self._on_crosstalk_changed)
+        self._crosstalk_slider.sliderPressed.connect(self._begin_preview_interaction)
+        self._crosstalk_slider.sliderReleased.connect(self._end_preview_interaction)
         crosstalk_row.addWidget(self._crosstalk_slider)
         film_layout.addLayout(crosstalk_row)
 
@@ -245,9 +299,19 @@ class MainWindow(QMainWindow):
         self._export_panel.set_copy_unedited_callback(lambda: self._copy_settings_to_roll(only_unedited=True))
         self._export_panel.name_template_changed.connect(self._update_export_name_preview)
 
+        self._grading_panel = GradingPanel(self)
+        self._grading_panel.changed.connect(self._schedule_live_update)
+        self._grading_panel.interaction_changed.connect(self._on_preview_interaction)
+
+        grading_scroll = QScrollArea(self)
+        grading_scroll.setWidgetResizable(True)
+        grading_scroll.setWidget(self._grading_panel)
+        grading_scroll.setMinimumWidth(280)
+
         tabs = QTabWidget(self)
         tabs.setMinimumWidth(280)
         tabs.addTab(scroll, "Adjustment")
+        tabs.addTab(grading_scroll, "Grading")
         tabs.addTab(self._export_panel, "Export")
 
         self._histogram = HistogramWidget(self)
@@ -312,6 +376,7 @@ class MainWindow(QMainWindow):
     def _adjustment_settings(self) -> dict:
         return {
             **self._panel.settings(),
+            **self._grading_panel.settings(),
             "crosstalk": crosstalk_slider_to_amount(self._crosstalk_slider.value()),
         }
 
@@ -335,7 +400,7 @@ class MainWindow(QMainWindow):
         self._schedule_sidecar_save()
 
     def _apply_crosstalk_only(self) -> None:
-        if self._current_preset() is None or self._preview_original is None:
+        if self._current_preset() is None or self._preview_engine.flat_original is None:
             return
         preset = self._render_preset_data()
         if preset is None or not preset_has_crosstalk(preset):
@@ -348,18 +413,19 @@ class MainWindow(QMainWindow):
         base = self._active_base if self._active_base is not None else self._base
         strength = crosstalk_slider_to_amount(self._crosstalk_slider.value())
         self._refresh_base_graded_cache()
+        flat = self._preview_engine.flat_original
         try:
-            if self._preview_pre_neutralize is not None:
+            if self._preview_engine.pre_neutralize is not None:
                 processed = apply_film_preset_from_pre_neutralize(
-                    self._preview_pre_neutralize,
-                    self._preview_original,
+                    self._preview_engine.pre_neutralize,
+                    flat,
                     preset,
                     base,
                     crosstalk_strength=strength,
                 )
             else:
                 processed = apply_film_preset(
-                    self._preview_original,
+                    flat,
                     preset,
                     base,
                     crosstalk_strength=strength,
@@ -482,12 +548,14 @@ class MainWindow(QMainWindow):
         # The film pipeline is expensive at full resolution, so the interactive
         # preview is rendered from a downscaled proxy. Export recomputes from the
         # full-resolution original, so the saved file is unaffected.
-        self._preview_original = self._downscale_for_preview(self._original_rgb)
+        flat = downscale_for_preview(self._original_rgb, preview_max_long_edge())
+        self._preview_engine.clear()
+        self._preview_engine.preview_max = preview_max_long_edge()
+        self._preview_engine.drag_preview_max = drag_preview_max_long_edge()
+        self._preview_engine.set_flat_original(flat, self._base)
         self._current_path = path
         self._adjust_base = None
-        self._preview_base = None
-        self._preview_base_graded = None
-        self._preview_pre_neutralize = None
+        self._preview_generation += 1
         self._preset_timer.stop()
         self._crosstalk_timer.stop()
         self._sidecar_timer.stop()
@@ -536,6 +604,7 @@ class MainWindow(QMainWindow):
         self._restoring = True
         self._select_preset_in_combo(preset)
         self._panel.set_settings({**NEUTRAL, **adjustments})
+        self._grading_panel.set_settings(adjustments.get("grading"))
         self._set_crosstalk_value(adjustments.get("crosstalk", NEUTRAL["crosstalk"]))
         self._restoring = False
         self._sync_crosstalk_controls()
@@ -553,6 +622,7 @@ class MainWindow(QMainWindow):
         self._restoring = True
         self._select_preset_in_combo(None)
         self._panel.set_settings(dict(NEUTRAL))
+        self._grading_panel.set_settings(GRADING_NEUTRAL)
         self._set_crosstalk_value(NEUTRAL["crosstalk"])
         self._restoring = False
         self._sync_crosstalk_controls()
@@ -586,13 +656,8 @@ class MainWindow(QMainWindow):
         self._update_export_name_preview()
 
     def _downscale_for_preview(self, rgb: np.ndarray) -> np.ndarray:
-        """Return a copy no larger than ``_PREVIEW_MAX`` on its longest edge."""
-        height, width = rgb.shape[:2]
-        longest = max(height, width)
-        if longest <= self._PREVIEW_MAX:
-            return rgb
-        step = int(np.ceil(longest / self._PREVIEW_MAX))
-        return np.ascontiguousarray(rgb[::step, ::step])
+        """Return a copy no larger than the configured preview max on its longest edge."""
+        return downscale_for_preview(rgb, preview_max_long_edge())
 
     def _render_preset(
         self,
@@ -602,7 +667,7 @@ class MainWindow(QMainWindow):
         show_busy: bool = True,
         crosstalk_strength: float | None = None,
     ) -> None:
-        if self._preview_original is None:
+        if self._preview_engine.flat_original is None:
             return
 
         resolved = resolve_preset_data(preset)
@@ -610,7 +675,7 @@ class MainWindow(QMainWindow):
         generation = self._apply_generation
 
         if resolved is None:
-            self._set_base(self._preview_original)
+            self._set_base(self._preview_engine.flat_original)
             return
 
         if show_busy:
@@ -621,7 +686,7 @@ class MainWindow(QMainWindow):
             else crosstalk_slider_to_amount(self._crosstalk_slider.value())
         )
         worker = ApplyPresetWorker(
-            self._preview_original,
+            self._preview_engine.flat_original,
             resolved,
             base,
             crosstalk_strength=strength,
@@ -659,10 +724,11 @@ class MainWindow(QMainWindow):
         if self._current_preset() is not None:
             return False
         settings = self._adjustment_settings()
-        return all(
+        scanner_defaults = all(
             abs(float(settings.get(key, 0)) - float(value)) < 1e-6 if key == "crosstalk" else settings.get(key) == value
             for key, value in NEUTRAL.items()
         )
+        return scanner_defaults and grading_is_neutral(settings.get("grading"))
 
     def _schedule_sidecar_save(self) -> None:
         if self._restoring or self._current_path is None:
@@ -702,77 +768,240 @@ class MainWindow(QMainWindow):
     def _set_base(self, image: np.ndarray) -> None:
         """Set the image the live adjustments operate on and refresh the preview."""
         self._adjust_base = image
-        self._build_preview()
-        self._update_live()
+        base = self._active_base if self._active_base is not None else self._base
+        self._preview_engine.set_film_base(image, base)
+        self._schedule_live_update(immediate=True)
 
     def _refresh_base_graded_cache(self) -> None:
-        if self._preview_original is None:
-            self._preview_base_graded = None
-            self._preview_pre_neutralize = None
-            return
         base = self._active_base if self._active_base is not None else self._base
-        self._preview_pre_neutralize = compute_pre_neutralize(self._preview_original, base)
-        self._preview_base_graded = compute_base_graded(self._preview_original, base)
+        self._preview_engine.rebuild_flat_cache(base)
 
-    def _build_preview(self) -> None:
-        if self._adjust_base is None:
-            self._preview_base = None
-            return
-        height, width = self._adjust_base.shape[:2]
-        longest = max(height, width)
-        if longest > self._PREVIEW_MAX:
-            step = int(np.ceil(longest / self._PREVIEW_MAX))
-            self._preview_base = np.ascontiguousarray(self._adjust_base[::step, ::step])
-        else:
-            self._preview_base = self._adjust_base
-
-        self._refresh_base_graded_cache()
-
-    def _stage_array(self, stage: PreviewStage) -> np.ndarray | None:
-        if stage is PreviewStage.FLAT:
-            return self._preview_original
-        if stage is PreviewStage.BASE:
-            return self._preview_base_graded
-        if stage is PreviewStage.FILM:
-            return self._preview_base
-        if stage is PreviewStage.FULL:
-            if self._preview_base is None:
-                return None
-            return compute_full_graded(self._preview_base, self._adjustment_settings())
-        return None
+    def _stage_array(self, stage: PreviewStage, *, preview_fast: bool = False) -> np.ndarray | None:
+        return self._preview_engine.stage_array(
+            stage,
+            self._adjustment_settings(),
+            preview_fast=preview_fast,
+        )
 
     def _refresh_preview_view(self) -> None:
+        preview_fast = self._preview_interacting
         if self._preview_bar.split_enabled():
-            before = self._stage_array(self._preview_bar.before_stage())
-            after = self._stage_array(self._preview_bar.after_stage())
+            before = self._stage_array(self._preview_bar.before_stage(), preview_fast=preview_fast)
+            after = self._stage_array(self._preview_bar.after_stage(), preview_fast=preview_fast)
             if before is None or after is None:
                 self._viewer.clear_image()
                 return
             self._viewer.set_split_images(
-                array_to_qimage(before),
-                array_to_qimage(after),
+                self._preview_image.to_qimage(before),
+                self._preview_image.to_qimage(after),
                 ratio=self._preview_bar.split_ratio(),
             )
             return
 
-        image = self._stage_array(self._preview_bar.view_stage())
+        image = self._stage_array(self._preview_bar.view_stage(), preview_fast=preview_fast)
         if image is None:
             self._viewer.clear_image()
             return
-        self._viewer.set_single_image(array_to_qimage(image))
+        self._viewer.set_single_image(self._preview_image.to_qimage(image))
 
-    def _schedule_live_update(self) -> None:
-        self._live_timer.start(self._LIVE_DEBOUNCE_MS)
+    def _live_debounce_ms(self) -> int:
+        return self._WHEEL_DEBOUNCE_MS if self._preview_interacting else self._LIVE_DEBOUNCE_MS
+
+    def _schedule_live_update(self, *, immediate: bool = False) -> None:
+        if immediate:
+            self._live_timer.stop()
+            self._update_live()
+        else:
+            self._live_timer.start(self._live_debounce_ms())
         self._schedule_sidecar_save()
 
+    def _begin_preview_interaction(self) -> None:
+        if self._preview_interaction_depth == 0:
+            self._preview_interacting = True
+        self._preview_interaction_depth += 1
+
+    def _end_preview_interaction(self) -> None:
+        self._preview_interaction_depth = max(0, self._preview_interaction_depth - 1)
+        if self._preview_interaction_depth == 0 and self._preview_interacting:
+            self._preview_interacting = False
+            self._grading_worker_pending = False
+            self._preview_engine.invalidate_adjustment_cache()
+            self._hist_timer.stop()
+            self._schedule_live_update(immediate=True)
+
+    def _on_preview_interaction(self, active: bool) -> None:
+        if active:
+            self._begin_preview_interaction()
+        else:
+            self._end_preview_interaction()
+
     def _update_live(self) -> None:
-        if self._preview_base is None:
+        """Refresh the live preview using a two-stage pipeline.
+
+        The heavy scanner stage runs on a background thread and is cached, so
+        it is only recomputed when a scanner control actually changes. The
+        grading stage (the color wheels, luminance, blending and balance) is
+        applied on top of that cached result -- on the GPU when available, which
+        makes wheel edits feel instantaneous, or on a serialized background
+        worker as a CPU fallback.
+        """
+        if self._preview_engine.film_base is None:
             self._histogram.clear()
             self._refresh_preview_view()
+            self._update_perf_overlay()
             return
-        full = compute_full_graded(self._preview_base, self._adjustment_settings())
-        self._histogram.set_image(full)
+
+        settings = self._adjustment_settings()
+        preview_fast = self._preview_interacting
+        engine = self._preview_engine
+
+        if engine.cache_hit(settings, preview_fast=preview_fast):
+            self._on_preview_ready(engine.render_full(settings, preview_fast=preview_fast))
+            return
+
+        if engine.scanner_cached(settings, preview_fast=preview_fast):
+            self._render_grading_stage(settings, preview_fast)
+            return
+
+        # Scanner settings changed: recompute that (expensive) stage off-thread.
+        self._preview_generation += 1
+        generation = self._preview_generation
+        film_base = engine.effective_film_base(preview_fast=preview_fast)
+        if film_base is None:
+            return
+        worker = ScannerAdjustWorker(
+            film_base,
+            settings,
+            generation,
+            preview_fast=preview_fast,
+        )
+        worker.signals.finished.connect(
+            lambda result, gen=generation: self._on_scanner_ready(
+                result,
+                gen,
+                settings,
+                preview_fast,
+            )
+        )
+        self._threadpool.start(worker)
+
+    def _on_scanner_ready(
+        self,
+        scanner_result: np.ndarray,
+        generation: int,
+        settings: dict,
+        preview_fast: bool,
+    ) -> None:
+        if generation != self._preview_generation:
+            return
+        self._preview_engine.store_scanner_result(settings, scanner_result, preview_fast=preview_fast)
+        self._render_grading_stage(settings, preview_fast)
+
+    def _gpu_ready(self) -> bool:
+        gpu = self._preview_engine.gpu_backend
+        return gpu is not None and getattr(gpu, "enabled", False)
+
+    def _render_grading_stage(self, settings: dict, preview_fast: bool) -> None:
+        """Apply grading on top of the cached scanner result and display it."""
+        engine = self._preview_engine
+
+        if self._gpu_ready() or not has_grading_adjustments(settings.get("grading")):
+            # GPU grading (or a no-op) is fast enough to run synchronously and
+            # give immediate feedback.
+            self._on_preview_ready(engine.render_full(settings, preview_fast=preview_fast))
+            return
+
+        # CPU fallback: grade off-thread, but serialize so the shared grading
+        # context (mask cache) only has one owner at a time. Newer requests
+        # coalesce into a single pending render that re-reads current state.
+        if self._grading_worker_busy:
+            self._grading_worker_pending = True
+            return
+
+        scanner_result = engine.scanner_result()
+        if scanner_result is None:
+            self._on_preview_ready(engine.render_full(settings, preview_fast=preview_fast))
+            return
+
+        self._grading_worker_busy = True
+        self._preview_generation += 1
+        generation = self._preview_generation
+        worker = GradingWorker(
+            scanner_result,
+            settings,
+            generation,
+            grading_context=engine.grading_context(),
+        )
+        worker.signals.finished.connect(
+            lambda result, gen=generation: self._on_grading_ready(
+                result,
+                gen,
+                settings,
+                preview_fast,
+            )
+        )
+        self._threadpool.start(worker)
+
+    def _on_grading_ready(
+        self,
+        result: np.ndarray,
+        generation: int,
+        settings: dict,
+        preview_fast: bool,
+    ) -> None:
+        self._grading_worker_busy = False
+        if generation == self._preview_generation:
+            self._preview_engine.store_rendered_full(settings, result, preview_fast=preview_fast)
+            self._on_preview_ready(result)
+
+        if self._grading_worker_pending:
+            self._grading_worker_pending = False
+            self._update_live()
+
+    def _on_preview_ready(self, full: np.ndarray | None) -> None:
+        if full is None:
+            self._histogram.clear()
+        else:
+            self._schedule_histogram(full)
         self._refresh_preview_view()
+        self._update_perf_overlay()
+
+    def _schedule_histogram(self, full: np.ndarray) -> None:
+        if not live_histogram_enabled():
+            return
+        self._pending_hist_rgb = full
+        if self._preview_interacting:
+            self._hist_timer.start(self._HIST_DEFER_MS)
+            return
+        self._apply_deferred_histogram()
+
+    def _apply_deferred_histogram(self) -> None:
+        if self._pending_hist_rgb is None:
+            return
+        hist = compute_histograms(self._pending_hist_rgb)
+        self._histogram.set_histograms(hist)
+
+    def _toggle_gpu_acceleration(self, checked: bool) -> None:
+        set_gpu_acceleration(checked)
+        self._preview_engine.invalidate_adjustment_cache()
+        self._schedule_live_update(immediate=True)
+
+    def _toggle_perf_overlay(self, checked: bool) -> None:
+        from film_stockpot.ui.preview_settings import set_show_perf_overlay
+
+        set_show_perf_overlay(checked)
+        self._update_perf_overlay()
+
+    def _update_perf_overlay(self) -> None:
+        if not show_perf_overlay():
+            self._perf_label.clear()
+            return
+        timings = self._preview_engine.last_timings
+        gpu = "GPU" if timings.used_gpu else "CPU"
+        self._perf_label.setText(
+            f"Preview {timings.total_ms:.0f} ms "
+            f"(scanner {timings.scanner_ms:.0f}, grading {timings.grading_ms:.0f}, {gpu})"
+        )
 
     def _copy_settings_to_roll(self, *, only_unedited: bool) -> None:
         paths = self._film_strip.paths()
