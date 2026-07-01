@@ -13,7 +13,7 @@ from film_stockpot.export_naming import DEFAULT_TEMPLATE
 from film_stockpot.image.crosstalk import crosstalk_strength_from_adjustments
 from film_stockpot.image.io import array_to_qimage, load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
-from film_stockpot.image.grading import apply_grading_after_scanner
+from film_stockpot.image.grading import apply_grading_after_scanner, apply_interactive_adjustments
 from film_stockpot.image.scanner import apply_scanner_adjustments
 from film_stockpot.presets.loader import resolve_preset_data
 
