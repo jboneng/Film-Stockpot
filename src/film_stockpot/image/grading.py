@@ -9,6 +9,13 @@ from typing import Any
 
 import numpy as np
 
+from film_stockpot.image.curves import (
+    CURVES_NEUTRAL,
+    apply_curves,
+    has_curve_adjustments,
+    normalize_curves,
+)
+
 _LUMA_WEIGHTS = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
 
 # Grading response strengths. These are shared verbatim with the GPU shader
@@ -25,6 +32,7 @@ GRADING_NEUTRAL: dict[str, Any] = {
     "highlights": {"hue": 0.0, "sat": 0.0, "lum": 0},
     "blending": 50,
     "balance": 0,
+    "curves": CURVES_NEUTRAL,
 }
 
 
@@ -41,6 +49,7 @@ def normalize_grading(grading: dict | None) -> dict:
         }
     result["blending"] = int(source.get("blending", GRADING_NEUTRAL["blending"]))
     result["balance"] = int(source.get("balance", GRADING_NEUTRAL["balance"]))
+    result["curves"] = normalize_curves(source.get("curves"))
     return result
 
 
@@ -67,13 +76,15 @@ def _zones_have_adjustments(grading: dict) -> bool:
     return False
 
 
-def has_grading_adjustments(grading: dict | None) -> bool:
-    """True when grading has any visible effect (a tinted or lifted zone).
-
-    Blending and balance only reshape the zone masks, so on their own they
-    produce no change; this returns ``False`` for them.
-    """
+def has_wheel_adjustments(grading: dict | None) -> bool:
+    """True when the color wheels or zone luminance sliders are active."""
     return _zones_have_adjustments(normalize_grading(grading))
+
+
+def has_grading_adjustments(grading: dict | None) -> bool:
+    """True when grading has any visible effect (wheels, luminance, or curves)."""
+    normalized = normalize_grading(grading)
+    return _zones_have_adjustments(normalized) or has_curve_adjustments(normalized.get("curves"))
 
 
 @dataclass
@@ -263,20 +274,19 @@ def _wheel_to_tint(zone: dict) -> np.ndarray:
     return np.array([red, green, blue], dtype=np.float32)
 
 
-def apply_interactive_adjustments(
+def apply_grading_after_scanner(
     rgb: np.ndarray,
     settings: dict | None = None,
     *,
-    preview_fast: bool = False,
     grading_context: GradingContext | None = None,
     gpu_backend: object | None = None,
 ) -> np.ndarray:
-    """Apply Frontier scanner controls, then interactive wheel grading."""
-    from film_stockpot.image.scanner import apply_scanner_adjustments
-
-    image = apply_scanner_adjustments(rgb, settings, preview_fast=preview_fast)
-
+    """Apply curves and color-wheel grading to a scanner-adjusted image."""
     grading = normalize_grading((settings or {}).get("grading"))
+    if not has_grading_adjustments(grading):
+        return rgb
+
+    image = apply_curves(rgb, grading.get("curves"))
     if not _zones_have_adjustments(grading):
         return image
 
@@ -287,6 +297,26 @@ def apply_interactive_adjustments(
 
     return apply_wheel_grading(
         image,
+        {"grading": grading},
+        grading_context=grading_context,
+    )
+
+
+def apply_interactive_adjustments(
+    rgb: np.ndarray,
+    settings: dict | None = None,
+    *,
+    preview_fast: bool = False,
+    grading_context: GradingContext | None = None,
+    gpu_backend: object | None = None,
+) -> np.ndarray:
+    """Apply Frontier scanner controls, then curves and wheel grading."""
+    from film_stockpot.image.scanner import apply_scanner_adjustments
+
+    image = apply_scanner_adjustments(rgb, settings, preview_fast=preview_fast)
+    return apply_grading_after_scanner(
+        image,
         settings,
         grading_context=grading_context,
+        gpu_backend=gpu_backend,
     )

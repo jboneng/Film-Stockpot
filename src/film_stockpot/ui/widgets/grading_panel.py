@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 
 from film_stockpot.image.grading import GRADING_NEUTRAL, normalize_grading
 from film_stockpot.ui.widgets.color_wheel import ColorWheelWidget
+from film_stockpot.ui.widgets.curve_editor import CurveEditorWidget
 
 
 class _ZoneControl(QWidget):
@@ -112,6 +113,11 @@ class GradingPanel(QWidget):
         self._balance_slider.sliderPressed.connect(self._begin_interaction)
         self._balance_slider.sliderReleased.connect(self._end_interaction)
 
+        self._curve_editor = CurveEditorWidget(self)
+        self._curve_editor.changed.connect(self.changed.emit)
+        self._curve_editor.interaction_changed.connect(self._on_zone_interaction)
+        layout.addWidget(self._curve_editor)
+
         self._reset_button = QPushButton("Reset Grading", self)
         self._reset_button.clicked.connect(self.reset)
         layout.addWidget(self._reset_button)
@@ -167,6 +173,7 @@ class GradingPanel(QWidget):
                 "highlights": self._highlights.zone_values(),
                 "blending": self._blending_slider.value(),
                 "balance": self._balance_slider.value(),
+                "curves": self._curve_editor.curves(),
             }
         }
 
@@ -185,6 +192,8 @@ class GradingPanel(QWidget):
         self._balance_slider.setValue(int(values["balance"]))
         self._balance_slider.blockSignals(False)
         self._balance_value.setText(str(values["balance"]))
+
+        self._curve_editor.set_curves(values.get("curves"))
 
     def reset(self) -> None:
         self.set_settings(GRADING_NEUTRAL)

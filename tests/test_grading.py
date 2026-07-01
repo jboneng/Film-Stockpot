@@ -123,6 +123,15 @@ def test_has_grading_adjustments_ignores_blending_and_balance() -> None:
     assert has_grading_adjustments(
         {**GRADING_NEUTRAL, "midtones": {"hue": 0.0, "sat": 0.0, "lum": 20}}
     )
+    assert has_grading_adjustments(
+        {
+            **GRADING_NEUTRAL,
+            "curves": {
+                **GRADING_NEUTRAL["curves"],
+                "R": [[0.0, 0.0], [0.5, 0.7], [1.0, 1.0]],
+            },
+        }
+    )
 
 
 def test_partial_wheel_deflection_is_clearly_visible() -> None:

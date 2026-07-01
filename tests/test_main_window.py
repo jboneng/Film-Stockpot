@@ -47,6 +47,10 @@ def test_grading_panel_set_settings_round_trips(qapp: QApplication) -> None:
         "shadows": {"hue": 30.0, "sat": 0.6, "lum": -12},
         "blending": 40,
         "balance": 15,
+        "curves": {
+            **GRADING_NEUTRAL["curves"],
+            "G": [[0.0, 0.0], [0.25, 0.35], [0.5, 0.5], [1.0, 1.0]],
+        },
     }
     panel.set_settings(grading)
     result = panel.settings()["grading"]
@@ -55,6 +59,7 @@ def test_grading_panel_set_settings_round_trips(qapp: QApplication) -> None:
     assert result["shadows"]["lum"] == -12
     assert result["blending"] == 40
     assert result["balance"] == 15
+    assert result["curves"]["G"] == grading["curves"]["G"]
 
 
 def test_grading_panel_set_settings_does_not_emit_changed(qapp: QApplication) -> None:

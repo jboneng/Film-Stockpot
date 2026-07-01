@@ -10,9 +10,10 @@ import numpy as np
 
 from film_stockpot.image.grading import (
     GradingContext,
+    apply_grading_after_scanner,
     apply_interactive_adjustments,
-    apply_wheel_grading,
     has_grading_adjustments,
+    has_wheel_adjustments,
 )
 from film_stockpot.image.io import compute_histograms
 from film_stockpot.image.scanner import apply_scanner_adjustments
@@ -250,27 +251,15 @@ class PreviewEngine:
             )
             return full
         gpu = self.gpu_backend
-        if gpu is not None and getattr(gpu, "enabled", False):
-            gpu_result = gpu.apply_grading(
-                after_scanner,
-                grading,
-                grading_context=self._grading_context,
-            )
-            if gpu_result is not None:
-                full = gpu_result
-                used_gpu = True
-            else:
-                full = apply_wheel_grading(
-                    after_scanner,
-                    adjustments,
-                    grading_context=self._grading_context,
-                )
-        else:
-            full = apply_wheel_grading(
-                after_scanner,
-                adjustments,
-                grading_context=self._grading_context,
-            )
+        full = apply_grading_after_scanner(
+            after_scanner,
+            adjustments,
+            grading_context=self._grading_context,
+            gpu_backend=gpu if gpu is not None and getattr(gpu, "enabled", False) else None,
+        )
+        used_gpu = bool(
+            gpu is not None and getattr(gpu, "enabled", False) and has_wheel_adjustments(grading)
+        )
         grading_ms = (time.perf_counter() - grading_started) * 1000.0
 
         self._full_key = full_key
