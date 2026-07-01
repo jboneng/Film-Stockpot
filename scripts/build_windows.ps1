@@ -52,7 +52,20 @@ if (Test-Path "build/film_stockpot") {
     Remove-Item -Recurse -Force "build/film_stockpot"
 }
 
-uv run pyinstaller packaging/film_stockpot.spec --noconfirm --clean
+$SavedBuildPath = $env:PATH
+$UvBin = Split-Path (Get-Command uv).Source -Parent
+$VenvScripts = Join-Path $Root ".venv\Scripts"
+$env:PATH = @(
+    "$env:SystemRoot\System32",
+    $env:SystemRoot,
+    $UvBin,
+    $VenvScripts
+) -join ';'
+try {
+    uv run pyinstaller packaging/film_stockpot.spec --noconfirm --clean
+} finally {
+    $env:PATH = $SavedBuildPath
+}
 
 Write-Host "==> Copying FilmPresets beside executable" -ForegroundColor Cyan
 $TargetPresets = Join-Path $Root "dist/FilmStockpot/FilmPresets"
@@ -73,6 +86,10 @@ try {
     Start-Sleep -Seconds 5
     if ($Proc.HasExited) {
         throw "FilmStockpot.exe exited immediately with code $($Proc.ExitCode). Qt/DLL startup failed."
+    }
+    $Proc.Refresh()
+    if ($Proc.MainWindowTitle -match "Unhandled exception|Error") {
+        throw "FilmStockpot.exe showed a startup error dialog: $($Proc.MainWindowTitle)"
     }
     Stop-Process -Id $Proc.Id -Force
     Write-Host "    Smoke test passed" -ForegroundColor Green

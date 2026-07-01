@@ -2,6 +2,10 @@
 
 import sys
 
+from film_stockpot.qt_runtime import ensure_qt_dll_paths
+
+ensure_qt_dll_paths()
+
 from PyQt6.QtWidgets import QApplication
 
 from film_stockpot import __version__
