@@ -1,6 +1,6 @@
 [project]
 name = "film-stockpot"
-version = "0.5.3"
+version = "0.5.4"
 description = "Apply film-stock looks to flat/log scans, Frontier-style"
 readme = "README.md"
 authors = [
