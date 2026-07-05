@@ -306,14 +306,21 @@ def apply_interactive_adjustments(
     rgb: np.ndarray,
     settings: dict | None = None,
     *,
+    preset: dict | None = None,
+    flat_scan: np.ndarray | None = None,
     preview_fast: bool = False,
     grading_context: GradingContext | None = None,
     gpu_backend: object | None = None,
+    skip_print_stage: bool = False,
 ) -> np.ndarray:
-    """Apply Frontier scanner controls, then curves and wheel grading."""
+    """Apply print emulation, Frontier scanner controls, then curves and wheel grading."""
+    from film_stockpot.image.print import apply_print_stage
     from film_stockpot.image.scanner import apply_scanner_adjustments
 
-    image = apply_scanner_adjustments(rgb, settings, preview_fast=preview_fast)
+    image = rgb
+    if not skip_print_stage:
+        image = apply_print_stage(image, settings, preset, flat_scan=flat_scan)
+    image = apply_scanner_adjustments(image, settings, preview_fast=preview_fast)
     return apply_grading_after_scanner(
         image,
         settings,

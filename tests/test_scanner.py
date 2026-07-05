@@ -84,3 +84,13 @@ def test_combined_settings_stay_in_range() -> None:
     assert result.shape == rgb.shape
     assert result.min() >= 0.0
     assert result.max() <= 1.0
+
+
+def test_gamma_still_applies_when_print_emulation_is_on() -> None:
+    rgb = np.full((8, 8, 3), 0.35, dtype=np.float32)
+    settings = {"print": {"enabled": True}, "gamma": 10}
+    neutral = apply_scanner_adjustments(rgb, {"print": {"enabled": True}})
+    bright = apply_scanner_adjustments(rgb, settings)
+    assert bright.mean() > neutral.mean()
+    unchanged = apply_scanner_adjustments(rgb, {"print": {"enabled": True}, "density": 10, "cyan": 8})
+    assert np.allclose(unchanged, neutral, atol=1e-6)

@@ -14,6 +14,8 @@ from film_stockpot.image.crosstalk import crosstalk_strength_from_adjustments
 from film_stockpot.image.io import array_to_qimage, load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
 from film_stockpot.image.grading import apply_grading_after_scanner, apply_interactive_adjustments
+from film_stockpot.image.print import apply_print_stage
+from film_stockpot.image.restoration import DefectParams, generate_defect_mask, remove_defects
 from film_stockpot.image.scanner import apply_scanner_adjustments
 from film_stockpot.presets.loader import resolve_preset_data
 
@@ -130,7 +132,7 @@ class PreviewAdjustWorker(QRunnable):
 class ScannerAdjustSignals(QObject):
     """Signals emitted by :class:`ScannerAdjustWorker`."""
 
-    finished = pyqtSignal(object, int)
+    finished = pyqtSignal(object, object, int)
 
 
 class ScannerAdjustWorker(QRunnable):
@@ -146,23 +148,33 @@ class ScannerAdjustWorker(QRunnable):
         adjustments: dict | None,
         generation: int,
         *,
+        preset: dict | None = None,
+        flat_scan: np.ndarray | None = None,
         preview_fast: bool = False,
     ) -> None:
         super().__init__()
         self._film_base = film_base
+        self._flat_scan = flat_scan
         self._adjustments = adjustments
         self._generation = generation
+        self._preset = preset
         self._preview_fast = preview_fast
         self.signals = ScannerAdjustSignals()
 
     @pyqtSlot()
     def run(self) -> None:
-        result = apply_scanner_adjustments(
+        after_print = apply_print_stage(
             self._film_base,
+            self._adjustments,
+            self._preset,
+            flat_scan=self._flat_scan,
+        )
+        result = apply_scanner_adjustments(
+            after_print,
             self._adjustments,
             preview_fast=self._preview_fast,
         )
-        self.signals.finished.emit(result, self._generation)
+        self.signals.finished.emit(result, after_print, self._generation)
 
 
 class GradingSignals(QObject):
@@ -202,6 +214,67 @@ class GradingWorker(QRunnable):
             grading_context=self._grading_context,
         )
         self.signals.finished.emit(result, self._generation)
+
+
+class DefectMaskSignals(QObject):
+    """Signals emitted by :class:`DefectMaskWorker`."""
+
+    finished = pyqtSignal(object, int)
+    error = pyqtSignal(str, int)
+
+
+class DefectMaskWorker(QRunnable):
+    """Detect dust / hair / scratch defects on a scan off the UI thread."""
+
+    def __init__(self, rgb: np.ndarray, params: DefectParams, generation: int) -> None:
+        super().__init__()
+        self._rgb = rgb
+        self._params = params
+        self._generation = generation
+        self.signals = DefectMaskSignals()
+
+    @pyqtSlot()
+    def run(self) -> None:
+        try:
+            mask = generate_defect_mask(self._rgb, self._params)
+        except Exception as error:  # noqa: BLE001 - surfaced to the UI
+            self.signals.error.emit(str(error), self._generation)
+            return
+        self.signals.finished.emit(mask, self._generation)
+
+
+class DefectRemoveSignals(QObject):
+    """Signals emitted by :class:`DefectRemoveWorker`."""
+
+    finished = pyqtSignal(object, int)
+    error = pyqtSignal(str, int)
+
+
+class DefectRemoveWorker(QRunnable):
+    """Inpaint masked defects on a scan off the UI thread."""
+
+    def __init__(
+        self,
+        rgb: np.ndarray,
+        mask: np.ndarray,
+        params: DefectParams,
+        generation: int,
+    ) -> None:
+        super().__init__()
+        self._rgb = rgb
+        self._mask = mask
+        self._params = params
+        self._generation = generation
+        self.signals = DefectRemoveSignals()
+
+    @pyqtSlot()
+    def run(self) -> None:
+        try:
+            cleaned = remove_defects(self._rgb, self._mask, self._params)
+        except Exception as error:  # noqa: BLE001 - surfaced to the UI
+            self.signals.error.emit(str(error), self._generation)
+            return
+        self.signals.finished.emit(cleaned, self._generation)
 
 
 class ExportOneSignals(QObject):
@@ -248,7 +321,13 @@ class ExportOneWorker(QRunnable):
                     self._base,
                     crosstalk_strength=crosstalk_strength_from_adjustments(self._adjustments),
                 )
-            rgb = apply_interactive_adjustments(rgb, self._adjustments)
+            rgb = apply_print_stage(rgb, self._adjustments, preset, flat_scan=self._original_rgb)
+            rgb = apply_interactive_adjustments(
+                rgb,
+                self._adjustments,
+                preset=preset,
+                skip_print_stage=True,
+            )
             save_image_array(self._path, rgb, bit_depth=self._bit_depth)
         except Exception as error:  # noqa: BLE001 - surfaced to the UI
             self.signals.error.emit(str(error))

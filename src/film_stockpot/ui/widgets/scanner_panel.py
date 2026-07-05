@@ -5,16 +5,17 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QSlider,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
 from film_stockpot.image.scanner import NEUTRAL
+from film_stockpot.ui.widgets.collapsible_section import CollapsibleSection
 
 
 class ScannerPanel(QWidget):
@@ -25,38 +26,38 @@ class ScannerPanel(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self._sliders: dict[str, QSlider] = {}
         self._value_labels: dict[str, QLabel] = {}
         self._interaction_depth = 0
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(12)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        title = QLabel("Frontier Controls", self)
-        title_font = title.font()
-        title_font.setBold(True)
-        title_font.setPointSize(title_font.pointSize() + 1)
-        title.setFont(title_font)
-        layout.addWidget(title)
+        frontier = CollapsibleSection("Frontier Controls", self)
+        frontier_layout = frontier.content_layout()
 
-        density = QGroupBox("Density", self)
-        density_layout = QVBoxLayout(density)
+        density = CollapsibleSection("Density", self, level="nested")
+        density_layout = density.content_layout()
         density_layout.addLayout(self._make_slider("density", "Density (+ darker)", -15, 15))
         density_layout.addLayout(self._make_slider("gamma", "Gamma (+ brighter)", -15, 15))
-        layout.addWidget(density)
+        frontier_layout.addWidget(density)
+        self._density_group = density
 
-        color_balance = QGroupBox("Color Balance", self)
-        color_layout = QVBoxLayout(color_balance)
+        color_balance = CollapsibleSection("Color Balance", self, level="nested")
+        color_layout = color_balance.content_layout()
         color_layout.addLayout(self._make_slider("cyan", "Cyan \u2194 Red", -15, 15))
         color_layout.addLayout(self._make_slider("magenta", "Magenta \u2194 Green", -15, 15))
         color_layout.addLayout(self._make_slider("yellow", "Yellow \u2194 Blue", -15, 15))
-        layout.addWidget(color_balance)
+        frontier_layout.addWidget(color_balance)
+        self._color_group = color_balance
+        self._print_overlap_keys = ("density", "cyan", "magenta", "yellow")
 
-        tone = QGroupBox("Tone", self)
-        tone_layout = QVBoxLayout(tone)
+        tone = CollapsibleSection("Tone", self, level="nested")
+        tone_layout = tone.content_layout()
         tone_row = QHBoxLayout()
-        tone_row.addWidget(QLabel("Tone", self))
+        tone_row.addWidget(QLabel("Tone curve", self))
         tone_row.addStretch(1)
         self._tone = QComboBox(self)
         self._tone.addItems(["Soft", "Standard", "Hard", "All Hard"])
@@ -66,23 +67,23 @@ class ScannerPanel(QWidget):
         tone_layout.addLayout(tone_row)
         tone_layout.addLayout(self._make_slider("highlight", "Highlight", -15, 15))
         tone_layout.addLayout(self._make_slider("shadow", "Shadow", -15, 15))
-        layout.addWidget(tone)
+        frontier_layout.addWidget(tone)
 
-        color = QGroupBox("Color", self)
-        color_only_layout = QVBoxLayout(color)
+        color = CollapsibleSection("Color", self, level="nested")
+        color_only_layout = color.content_layout()
         color_only_layout.addLayout(self._make_slider("saturation", "Saturation", -8, 8))
-        layout.addWidget(color)
+        frontier_layout.addWidget(color)
 
-        detail = QGroupBox("Detail", self)
-        detail_layout = QVBoxLayout(detail)
+        detail = CollapsibleSection("Detail", self, level="nested")
+        detail_layout = detail.content_layout()
         detail_layout.addLayout(self._make_slider("sharpness", "Sharpness", 0, 10))
-        layout.addWidget(detail)
+        frontier_layout.addWidget(detail)
 
         self._reset_button = QPushButton("Reset Controls", self)
         self._reset_button.clicked.connect(self.reset)
-        layout.addWidget(self._reset_button)
+        frontier_layout.addWidget(self._reset_button)
 
-        layout.addStretch(1)
+        layout.addWidget(frontier)
 
     def _make_slider(self, key: str, label: str, low: int, high: int) -> QVBoxLayout:
         row = QVBoxLayout()
@@ -154,3 +155,21 @@ class ScannerPanel(QWidget):
         self._tone.setCurrentText(NEUTRAL["tone"])
         self._tone.blockSignals(False)
         self.changed.emit()
+
+    def set_print_controls_active(self, active: bool) -> None:
+        """Disable Frontier density/CMY that overlap print; keep gamma for post-print tone."""
+        tooltip = (
+            "Controlled by Print emulation when print is enabled."
+            if active
+            else ""
+        )
+        self._density_group.setEnabled(True)
+        self._density_group.setToolTip("")
+        self._color_group.setEnabled(not active)
+        self._color_group.setToolTip(tooltip)
+        self._sliders["gamma"].setEnabled(True)
+        self._sliders["gamma"].setToolTip("")
+        for key in self._print_overlap_keys:
+            slider = self._sliders[key]
+            slider.setEnabled(not active)
+            slider.setToolTip(tooltip if active else "")

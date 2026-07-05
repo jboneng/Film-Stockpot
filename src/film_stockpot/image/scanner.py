@@ -40,6 +40,7 @@ def apply_scanner_adjustments(
     settings: dict | None = None,
     *,
     preview_fast: bool = False,
+    skip_print_controls: bool | None = None,
 ) -> np.ndarray:
     """Apply Frontier-style operator adjustments to a float32 RGB image (0..1).
 
@@ -52,25 +53,31 @@ def apply_scanner_adjustments(
     else:
         image = np.clip(rgb, 0.0, 1.0)
 
-    density = float(values["density"])
-    if density != 0.0:
-        image = np.clip(image * (2.0 ** (-density * 0.05)), 0.0, 1.0)
+    if skip_print_controls is None:
+        from film_stockpot.image.print import print_enabled
+
+        skip_print_controls = print_enabled(settings)
+
+    if not skip_print_controls:
+        density = float(values["density"])
+        if density != 0.0:
+            image = np.clip(image * (2.0 ** (-density * 0.05)), 0.0, 1.0)
+
+        cyan = float(values["cyan"])
+        magenta = float(values["magenta"])
+        yellow = float(values["yellow"])
+        if cyan or magenta or yellow:
+            step = 0.012
+            # Negative slider values add the named cast (cyan/magenta/yellow); positive
+            # values add the complementary color (red/green/blue), matching the
+            # left-to-right labels on the Frontier-style controls.
+            gains = np.array([1.0 + cyan * step, 1.0 + magenta * step, 1.0 + yellow * step], dtype=np.float32)
+            image = np.clip(image * gains, 0.0, 1.0)
 
     gamma_steps = float(values["gamma"])
     if gamma_steps != 0.0:
         gamma = 1.0 + gamma_steps * 0.04
         image = np.clip(image, 0.0, 1.0) ** (1.0 / gamma)
-
-    cyan = float(values["cyan"])
-    magenta = float(values["magenta"])
-    yellow = float(values["yellow"])
-    if cyan or magenta or yellow:
-        step = 0.012
-        # Negative slider values add the named cast (cyan/magenta/yellow); positive
-        # values add the complementary color (red/green/blue), matching the
-        # left-to-right labels on the Frontier-style controls.
-        gains = np.array([1.0 + cyan * step, 1.0 + magenta * step, 1.0 + yellow * step], dtype=np.float32)
-        image = np.clip(image * gains, 0.0, 1.0)
 
     tone_factor = TONE_FACTORS.get(values["tone"], 1.0)
     if tone_factor != 1.0:

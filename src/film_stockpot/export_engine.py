@@ -11,6 +11,7 @@ from pathlib import Path
 from film_stockpot.image.crosstalk import crosstalk_strength_from_adjustments
 from film_stockpot.image.io import load_image_array, save_image_array
 from film_stockpot.image.pipeline import apply_film_preset
+from film_stockpot.image.print import apply_print_stage
 from film_stockpot.image.grading import apply_interactive_adjustments
 from film_stockpot.image.scanner import NEUTRAL
 from film_stockpot.presets.loader import resolve_preset_data
@@ -150,6 +151,7 @@ def resolve_output_path(
 def render_job_to_path(job: ExportJob, target: Path, *, bit_depth: int = 16) -> None:
     """Load, render, and save one export job."""
     rgb = load_image_array(job["path"])
+    flat_scan = rgb
     preset = resolve_preset_data(job.get("preset"))
     if preset is not None:
         rgb = apply_film_preset(
@@ -158,7 +160,8 @@ def render_job_to_path(job: ExportJob, target: Path, *, bit_depth: int = 16) -> 
             job.get("base"),
             crosstalk_strength=crosstalk_strength_from_adjustments(job.get("adjustments")),
         )
-    rgb = apply_interactive_adjustments(rgb, job.get("adjustments"))
+    rgb = apply_print_stage(rgb, job.get("adjustments"), preset, flat_scan=flat_scan)
+    rgb = apply_interactive_adjustments(rgb, job.get("adjustments"), preset=preset, skip_print_stage=True)
     target.parent.mkdir(parents=True, exist_ok=True)
     save_image_array(target, rgb, bit_depth=bit_depth)
 

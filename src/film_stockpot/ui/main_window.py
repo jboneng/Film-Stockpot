@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDockWidget,
     QFileDialog,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -21,6 +20,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSlider,
+    QSizePolicy,
     QTabWidget,
     QToolBar,
     QVBoxLayout,
@@ -47,7 +47,9 @@ from film_stockpot.image.crosstalk import (
     normalize_crosstalk_amount,
     preset_has_crosstalk,
 )
+from film_stockpot.image.print import PRINT_NEUTRAL, normalize_print_settings
 from film_stockpot.image.pipeline import apply_film_preset, apply_film_preset_from_pre_neutralize
+from film_stockpot.image.restoration import mask_coverage
 from film_stockpot.image.scanner import NEUTRAL
 from film_stockpot.presets.loader import load_base, load_grouped_presets, resolve_preset_data
 from film_stockpot.sidecar import (
@@ -76,10 +78,15 @@ from film_stockpot.ui.widgets.histogram import HistogramWidget
 from film_stockpot.ui.widgets.image_viewer import ImageViewer
 from film_stockpot.ui.widgets.preview_mode_bar import PreviewModeBar
 from film_stockpot.ui.widgets.grading_panel import GradingPanel
+from film_stockpot.ui.widgets.print_panel import PrintPanel
+from film_stockpot.ui.widgets.restoration_panel import RestorationPanel
+from film_stockpot.ui.widgets.collapsible_section import CollapsibleSection
 from film_stockpot.ui.widgets.scanner_panel import ScannerPanel
 from film_stockpot.ui.workers import (
     ApplyPresetWorker,
     BatchExportWorker,
+    DefectMaskWorker,
+    DefectRemoveWorker,
     ExportOneWorker,
     GradingWorker,
     ScannerAdjustWorker,
@@ -124,6 +131,9 @@ class MainWindow(QMainWindow):
         self._restoring = False
         self._reset_crosstalk_on_apply = True
         self._batch_worker: BatchExportWorker | None = None
+        self._defect_mask: np.ndarray | None = None
+        self._defect_view_active = False
+        self._defect_generation = 0
         self._threadpool = QThreadPool.globalInstance()
 
         try:
@@ -243,10 +253,15 @@ class MainWindow(QMainWindow):
         self._panel.changed.connect(self._schedule_live_update)
         self._panel.interaction_changed.connect(self._on_preview_interaction)
 
+        self._print_panel = PrintPanel(self)
+        self._print_panel.changed.connect(self._schedule_live_update)
+        self._print_panel.interaction_changed.connect(self._on_preview_interaction)
+        self._print_panel.enabled_changed.connect(self._on_print_enabled_changed)
+
         self._combo = QComboBox(self)
 
-        film_group = QGroupBox("Film Stock", self)
-        film_layout = QVBoxLayout(film_group)
+        film_section = CollapsibleSection("Film Stock", self)
+        film_layout = film_section.content_layout()
         film_layout.addWidget(self._combo)
 
         crosstalk_row = QVBoxLayout()
@@ -283,9 +298,13 @@ class MainWindow(QMainWindow):
         container = QWidget(self)
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(0, 0, 0, 0)
-        container_layout.setSpacing(12)
-        container_layout.addWidget(film_group)
+        container_layout.setSpacing(0)
+        container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        container_layout.addWidget(film_section)
+        container_layout.addWidget(self._print_panel)
         container_layout.addWidget(self._panel)
+        container_layout.addStretch(1)
+        container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
@@ -308,10 +327,23 @@ class MainWindow(QMainWindow):
         grading_scroll.setWidget(self._grading_panel)
         grading_scroll.setMinimumWidth(280)
 
+        self._restoration_panel = RestorationPanel(self)
+        self._restoration_panel.generate_requested.connect(self._generate_defect_mask)
+        self._restoration_panel.clear_requested.connect(self._clear_defect_mask)
+        self._restoration_panel.remove_requested.connect(self._remove_defects)
+        self._restoration_panel.mask_view_toggled.connect(self._on_mask_view_toggled)
+        self._restoration_panel.overlay_changed.connect(self._refresh_mask_overlay)
+
+        restoration_scroll = QScrollArea(self)
+        restoration_scroll.setWidgetResizable(True)
+        restoration_scroll.setWidget(self._restoration_panel)
+        restoration_scroll.setMinimumWidth(280)
+
         tabs = QTabWidget(self)
         tabs.setMinimumWidth(280)
         tabs.addTab(scroll, "Adjustment")
         tabs.addTab(grading_scroll, "Grading")
+        tabs.addTab(restoration_scroll, "Restoration")
         tabs.addTab(self._export_panel, "Export")
 
         self._histogram = HistogramWidget(self)
@@ -378,7 +410,14 @@ class MainWindow(QMainWindow):
             **self._panel.settings(),
             **self._grading_panel.settings(),
             "crosstalk": crosstalk_slider_to_amount(self._crosstalk_slider.value()),
+            "print": self._print_panel.settings(),
         }
+
+    def _on_print_enabled_changed(self, enabled: bool) -> None:
+        self._panel.set_print_controls_active(enabled)
+        self._preview_engine.invalidate_adjustment_cache()
+        if not self._restoring:
+            self._schedule_live_update(immediate=True)
 
     def _set_crosstalk_value(self, value: float) -> None:
         amount = normalize_crosstalk_amount(value)
@@ -559,6 +598,8 @@ class MainWindow(QMainWindow):
         self._preset_timer.stop()
         self._crosstalk_timer.stop()
         self._sidecar_timer.stop()
+        self._reset_defect_state()
+        self._restoration_panel.set_image_available(True)
 
         sidecar = read_sidecar(path)
         if sidecar:
@@ -604,6 +645,8 @@ class MainWindow(QMainWindow):
         self._restoring = True
         self._select_preset_in_combo(preset)
         self._panel.set_settings({**NEUTRAL, **adjustments})
+        self._print_panel.set_settings(adjustments.get("print"), preset)
+        self._panel.set_print_controls_active(self._print_panel.is_enabled())
         self._grading_panel.set_settings(adjustments.get("grading"))
         self._set_crosstalk_value(adjustments.get("crosstalk", NEUTRAL["crosstalk"]))
         self._restoring = False
@@ -622,6 +665,8 @@ class MainWindow(QMainWindow):
         self._restoring = True
         self._select_preset_in_combo(None)
         self._panel.set_settings(dict(NEUTRAL))
+        self._print_panel.set_settings(dict(PRINT_NEUTRAL), None)
+        self._panel.set_print_controls_active(False)
         self._grading_panel.set_settings(GRADING_NEUTRAL)
         self._set_crosstalk_value(NEUTRAL["crosstalk"])
         self._restoring = False
@@ -644,6 +689,7 @@ class MainWindow(QMainWindow):
         if reset_crosstalk and not self._restoring:
             self._set_crosstalk_value(NEUTRAL["crosstalk"])
         self._sync_crosstalk_controls()
+        self._print_panel.sync_for_preset(self._render_preset_data())
         self._active_base = self._base
         self._refresh_base_graded_cache()
         self._render_preset(
@@ -728,7 +774,11 @@ class MainWindow(QMainWindow):
             abs(float(settings.get(key, 0)) - float(value)) < 1e-6 if key == "crosstalk" else settings.get(key) == value
             for key, value in NEUTRAL.items()
         )
-        return scanner_defaults and grading_is_neutral(settings.get("grading"))
+        print_defaults = normalize_print_settings(settings.get("print"), self._render_preset_data()) == normalize_print_settings(
+            PRINT_NEUTRAL,
+            self._render_preset_data(),
+        )
+        return scanner_defaults and print_defaults and grading_is_neutral(settings.get("grading"))
 
     def _schedule_sidecar_save(self) -> None:
         if self._restoring or self._current_path is None:
@@ -765,11 +815,132 @@ class MainWindow(QMainWindow):
             self._sidecar_timer.stop()
             self._restore_defaults()
 
+    # ------------------------------------------------------------------
+    # Defect removal (Restoration tab)
+    # ------------------------------------------------------------------
+
+    def _reset_defect_state(self) -> None:
+        """Drop any mask and mask-view state (used when switching images)."""
+        self._defect_generation += 1
+        self._defect_mask = None
+        self._defect_view_active = False
+        self._restoration_panel.set_mask_available(False)
+        self._restoration_panel.set_status("No mask generated.")
+
+    def _generate_defect_mask(self) -> None:
+        scan = self._preview_engine.flat_original
+        if scan is None:
+            return
+        self._defect_generation += 1
+        generation = self._defect_generation
+        params = self._restoration_panel.params()
+        self._set_busy(True, "Detecting defects...")
+        worker = DefectMaskWorker(scan, params, generation)
+        worker.signals.finished.connect(self._on_defect_mask_ready)
+        worker.signals.error.connect(self._on_defect_error)
+        self._threadpool.start(worker)
+
+    def _on_defect_mask_ready(self, mask: np.ndarray, generation: int) -> None:
+        if generation != self._defect_generation:
+            return
+        self._set_busy(False)
+        if mask is None or not mask.any():
+            self._defect_mask = None
+            self._restoration_panel.set_mask_available(False)
+            self._restoration_panel.set_status("No defects found. Try raising sensitivity.")
+            return
+        self._defect_mask = mask
+        self._restoration_panel.set_mask_available(True)
+        self._restoration_panel.set_status(
+            f"Mask ready: {mask_coverage(mask) * 100:.2f}% of pixels flagged."
+        )
+        if self._restoration_panel.is_mask_view_active():
+            self._refresh_mask_overlay()
+
+    def _on_defect_error(self, message: str, generation: int) -> None:
+        if generation != self._defect_generation:
+            return
+        self._set_busy(False)
+        QMessageBox.critical(self, "Defect Processing Failed", f"Processing failed.\n\n{message}")
+
+    def _on_mask_view_toggled(self, active: bool) -> None:
+        self._defect_view_active = active and self._defect_mask is not None
+        if self._defect_view_active:
+            self._refresh_mask_overlay()
+        else:
+            self._refresh_preview_view()
+
+    def _refresh_mask_overlay(self) -> None:
+        mask = self._defect_mask
+        if mask is None or not self._restoration_panel.is_mask_view_active():
+            return
+        base = self._stage_array(self._preview_bar.view_stage())
+        if base is None or base.shape[:2] != mask.shape:
+            base = self._preview_engine.flat_original
+        if base is None or base.shape[:2] != mask.shape:
+            return
+        overlay = self._compose_mask_overlay(base, mask, self._restoration_panel.overlay_opacity())
+        self._viewer.set_single_image(self._preview_image.to_qimage(overlay))
+
+    @staticmethod
+    def _compose_mask_overlay(base: np.ndarray, mask: np.ndarray, opacity: float) -> np.ndarray:
+        overlay = np.clip(base, 0.0, 1.0).astype(np.float32, copy=True)
+        tint = np.array([1.0, 0.15, 0.15], dtype=np.float32)
+        opacity = float(max(0.0, min(1.0, opacity)))
+        overlay[mask] = overlay[mask] * (1.0 - opacity) + tint * opacity
+        return overlay
+
+    def _remove_defects(self) -> None:
+        scan = self._preview_engine.flat_original
+        mask = self._defect_mask
+        if scan is None or mask is None or not mask.any():
+            return
+        self._defect_generation += 1
+        generation = self._defect_generation
+        params = self._restoration_panel.params()
+        self._set_busy(True, "Removing defects...")
+        worker = DefectRemoveWorker(scan, mask, params, generation)
+        worker.signals.finished.connect(self._on_defect_removed)
+        worker.signals.error.connect(self._on_defect_error)
+        self._threadpool.start(worker)
+
+    def _on_defect_removed(self, cleaned: np.ndarray, generation: int) -> None:
+        if generation != self._defect_generation:
+            return
+        self._set_busy(False)
+        self._defect_mask = None
+        self._defect_view_active = False
+        self._restoration_panel.set_mask_available(False)
+        self._restoration_panel.set_status("Defects removed. Generate again to remove more.")
+        self._reprocess_from_scan(cleaned)
+
+    def _clear_defect_mask(self) -> None:
+        self._defect_mask = None
+        self._defect_view_active = False
+        self._restoration_panel.set_mask_available(False)
+        self._restoration_panel.set_status("No mask generated.")
+        if self._original_rgb is None:
+            self._refresh_preview_view()
+            return
+        # Restore the pristine scan proxy so any prior removal is undone.
+        self._reprocess_from_scan(downscale_for_preview(self._original_rgb, preview_max_long_edge()))
+
+    def _reprocess_from_scan(self, scan: np.ndarray) -> None:
+        """Feed a (cleaned or restored) scan proxy back through the film pipeline."""
+        base = self._active_base if self._active_base is not None else self._base
+        self._preview_engine.set_flat_original(scan, base)
+        self._refresh_base_graded_cache()
+        self._render_preset(
+            self._current_preset(),
+            base,
+            crosstalk_strength=crosstalk_slider_to_amount(self._crosstalk_slider.value()),
+        )
+
     def _set_base(self, image: np.ndarray) -> None:
         """Set the image the live adjustments operate on and refresh the preview."""
         self._adjust_base = image
         base = self._active_base if self._active_base is not None else self._base
-        self._preview_engine.set_film_base(image, base)
+        self._preview_engine.set_film_base(image, base, self._render_preset_data())
         self._schedule_live_update(immediate=True)
 
     def _refresh_base_graded_cache(self) -> None:
@@ -869,15 +1040,19 @@ class MainWindow(QMainWindow):
         film_base = engine.effective_film_base(preview_fast=preview_fast)
         if film_base is None:
             return
+        flat_scan = engine.effective_flat_scan(preview_fast=preview_fast)
         worker = ScannerAdjustWorker(
             film_base,
             settings,
             generation,
+            preset=self._render_preset_data(),
+            flat_scan=flat_scan,
             preview_fast=preview_fast,
         )
         worker.signals.finished.connect(
-            lambda result, gen=generation: self._on_scanner_ready(
-                result,
+            lambda scanner_result, print_result, gen=generation: self._on_scanner_ready(
+                scanner_result,
+                print_result,
                 gen,
                 settings,
                 preview_fast,
@@ -888,12 +1063,14 @@ class MainWindow(QMainWindow):
     def _on_scanner_ready(
         self,
         scanner_result: np.ndarray,
+        print_result: np.ndarray,
         generation: int,
         settings: dict,
         preview_fast: bool,
     ) -> None:
         if generation != self._preview_generation:
             return
+        self._preview_engine.store_print_result(settings, print_result, preview_fast=preview_fast)
         self._preview_engine.store_scanner_result(settings, scanner_result, preview_fast=preview_fast)
         self._render_grading_stage(settings, preview_fast)
 
@@ -1259,6 +1436,7 @@ class MainWindow(QMainWindow):
         self._crosstalk_slider.setEnabled(crosstalk_enabled)
         self._reset_film_button.setEnabled(has_image and not busy)
         self._panel.setEnabled(has_image and not busy)
+        self._restoration_panel.setEnabled(has_image and not busy)
         self._export_panel.set_enabled(has_image and not busy)
 
     def resizeEvent(self, event) -> None:  # noqa: N802

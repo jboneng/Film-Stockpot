@@ -16,6 +16,7 @@ from film_stockpot.image.grading import (
     has_wheel_adjustments,
 )
 from film_stockpot.image.io import compute_histograms
+from film_stockpot.image.print import apply_print_stage, print_cache_key, print_enabled
 from film_stockpot.image.scanner import apply_scanner_adjustments
 from film_stockpot.ui.preview_stages import PreviewStage, compute_base_graded, compute_pre_neutralize
 
@@ -68,7 +69,10 @@ class PreviewEngine:
     _pre_neutralize: np.ndarray | None = field(default=None, init=False)
     _film_base: np.ndarray | None = field(default=None, init=False)
     _film_base_full: np.ndarray | None = field(default=None, init=False)
+    _render_preset: dict | None = field(default=None, init=False)
     _base_profile: dict | None = field(default=None, init=False)
+    _print_key: str | None = field(default=None, init=False)
+    _print_result: np.ndarray | None = field(default=None, init=False)
     _scanner_key: str | None = field(default=None, init=False)
     _scanner_result: np.ndarray | None = field(default=None, init=False)
     _full_key: str | None = field(default=None, init=False)
@@ -82,7 +86,10 @@ class PreviewEngine:
         self._pre_neutralize = None
         self._film_base = None
         self._film_base_full = None
+        self._render_preset = None
         self._base_profile = None
+        self._print_key = None
+        self._print_result = None
         self._scanner_key = None
         self._scanner_result = None
         self._full_key = None
@@ -99,11 +106,14 @@ class PreviewEngine:
         self._pre_neutralize = compute_pre_neutralize(self._flat, base_profile)
         self._base_graded = compute_base_graded(self._flat, base_profile)
 
-    def set_film_base(self, rgb: np.ndarray | None, base_profile: dict | None) -> None:
+    def set_film_base(self, rgb: np.ndarray | None, base_profile: dict | None, preset: dict | None = None) -> None:
         """Set the film-stock preview base and invalidate adjustment caches."""
         self._film_base_full = rgb
         self._base_profile = base_profile
+        self._render_preset = preset
         self._film_base = downscale_for_preview(rgb, self.preview_max) if rgb is not None else None
+        self._print_key = None
+        self._print_result = None
         self._scanner_key = None
         self._scanner_result = None
         self._full_key = None
@@ -138,6 +148,14 @@ class PreviewEngine:
         if preview_fast:
             return downscale_for_preview(base, self.drag_preview_max)
         return base
+
+    def effective_flat_scan(self, *, preview_fast: bool = False) -> np.ndarray | None:
+        flat = self._flat
+        if flat is None:
+            return None
+        if preview_fast:
+            return downscale_for_preview(flat, self.drag_preview_max)
+        return flat
 
     def cache_hit(self, adjustments: dict | None, *, preview_fast: bool = False) -> bool:
         if self._film_base is None:
@@ -177,6 +195,19 @@ class PreviewEngine:
         self._full_key = None
         self._full_result = None
 
+    def store_print_result(
+        self,
+        adjustments: dict | None,
+        result: np.ndarray,
+        *,
+        preview_fast: bool = False,
+    ) -> None:
+        key = print_cache_key(adjustments, self._render_preset)
+        if preview_fast:
+            key = f"{key}:fast"
+        self._print_key = key
+        self._print_result = result
+
     def store_rendered_full(
         self,
         adjustments: dict | None,
@@ -189,10 +220,47 @@ class PreviewEngine:
         self._full_result = result
 
     def invalidate_adjustment_cache(self) -> None:
+        self._print_key = None
+        self._print_result = None
         self._scanner_key = None
         self._scanner_result = None
         self._full_key = None
         self._full_result = None
+
+    def _render_print_stage(
+        self,
+        film_base: np.ndarray,
+        adjustments: dict | None,
+        *,
+        preview_fast: bool = False,
+        compute_if_missing: bool = True,
+    ) -> np.ndarray:
+        if not print_enabled(adjustments):
+            return film_base
+
+        key = print_cache_key(adjustments, self._render_preset)
+        if preview_fast:
+            key = f"{key}:fast"
+        if self._print_key == key and self._print_result is not None:
+            return self._print_result
+        if not compute_if_missing:
+            return self._print_result if self._print_result is not None else film_base
+
+        prior_key = self._print_key
+        result = apply_print_stage(
+            film_base,
+            adjustments,
+            self._render_preset,
+            flat_scan=self.effective_flat_scan(preview_fast=preview_fast),
+        )
+        self._print_key = key
+        self._print_result = result
+        if prior_key != key:
+            self._scanner_key = None
+            self._scanner_result = None
+            self._full_key = None
+            self._full_result = None
+        return result
 
     def stage_array(
         self,
@@ -207,6 +275,16 @@ class PreviewEngine:
             return self._base_graded
         if stage is PreviewStage.FILM:
             return self._film_base
+        if stage is PreviewStage.PRINT:
+            film_base = self.effective_film_base(preview_fast=preview_fast)
+            if film_base is None:
+                return None
+            return self._render_print_stage(
+                film_base,
+                adjustments,
+                preview_fast=preview_fast,
+                compute_if_missing=False,
+            )
         if stage is PreviewStage.FULL:
             return self.render_full(adjustments, preview_fast=preview_fast)
         return None
@@ -221,13 +299,27 @@ class PreviewEngine:
 
         scanner_key = _scanner_key(adjustments, preview_fast=preview_fast)
         started = time.perf_counter()
-        scanner_started = time.perf_counter()
         if self._scanner_key == scanner_key and self._scanner_result is not None:
             after_scanner = self._scanner_result
             scanner_ms = 0.0
         else:
+            scanner_started = time.perf_counter()
+            if print_enabled(adjustments):
+                print_key = print_cache_key(adjustments, self._render_preset)
+                if preview_fast:
+                    print_key = f"{print_key}:fast"
+                if self._print_key == print_key and self._print_result is not None:
+                    after_print = self._print_result
+                elif self._full_result is not None:
+                    # Print stage runs off-thread; keep the last frame until the worker finishes.
+                    return self._full_result
+                else:
+                    after_print = film_base
+            else:
+                after_print = film_base
+
             after_scanner = apply_scanner_adjustments(
-                film_base,
+                after_print,
                 adjustments,
                 preview_fast=preview_fast,
             )
@@ -288,6 +380,8 @@ class PreviewEngine:
         return apply_interactive_adjustments(
             self._film_base,
             adjustments,
+            preset=self._render_preset,
+            flat_scan=self._flat,
             preview_fast=preview_fast,
             grading_context=self._grading_context,
             gpu_backend=self.gpu_backend if getattr(self.gpu_backend, "enabled", False) else None,
