@@ -263,16 +263,33 @@ def bridge_scan_to_print_linear(rgb: np.ndarray) -> np.ndarray:
 def display_to_normalized_log(rgb: np.ndarray) -> np.ndarray:
     """Approximate normalized negative log from a display-linear film image."""
     img = np.clip(np.asarray(rgb, dtype=np.float32), 0.0, 1.0)
-    anchor = float(EXPOSURE_CONSTANTS["assumed_anchor"])
-    span_scale = 0.35
     out = np.empty_like(img)
     for ch in range(3):
         plane = img[:, :, ch]
         lo, hi = np.percentile(plane, [2.0, 98.0])
-        mid = 0.5 * (float(lo) + float(hi))
         span = max(float(hi) - float(lo), 0.05)
-        # Bright display values are low negative density (high print transmittance).
-        out[:, :, ch] = np.clip(anchor - (plane - mid) / span * span_scale, 0.0, 1.0)
+        # Bright display values are low normalized log (matches flat-scan decode polarity).
+        norm = (plane - lo) / span
+        out[:, :, ch] = np.clip(1.0 - norm, 0.0, 1.0)
+    return out.astype(np.float32, copy=False)
+
+
+def graded_display_to_normalized_log(graded: np.ndarray, flat_scan: np.ndarray) -> np.ndarray:
+    """Map a film-graded display image into print density space, anchored to the flat scan."""
+    log_flat = flat_scan_to_normalized_log(flat_scan)
+    log_disp = display_to_normalized_log(graded)
+    out = np.empty_like(graded)
+    for ch in range(3):
+        flat_mid = float(np.percentile(log_flat[:, :, ch], 50.0))
+        disp_mid = float(np.percentile(log_disp[:, :, ch], 50.0))
+        flat_span = float(
+            np.percentile(log_flat[:, :, ch], 98.0) - np.percentile(log_flat[:, :, ch], 2.0)
+        )
+        disp_span = float(
+            np.percentile(log_disp[:, :, ch], 98.0) - np.percentile(log_disp[:, :, ch], 2.0)
+        )
+        scale = flat_span / max(disp_span, 0.05)
+        out[:, :, ch] = np.clip(flat_mid + (log_disp[:, :, ch] - disp_mid) * scale, 0.0, 1.0)
     return out.astype(np.float32, copy=False)
 
 

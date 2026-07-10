@@ -133,6 +133,78 @@ def test_print_lift_matches_flat_scan_median() -> None:
     assert out_mid >= ref_mid * 0.85
 
 
+def test_print_uses_graded_path_when_film_stock_selected() -> None:
+    """With a film preset, print must follow the graded image — not re-decode the flat scan."""
+    import json
+    from pathlib import Path
+
+    from film_stockpot.image.pipeline import apply_film_preset
+    from film_stockpot.image.print.logic import get_luminance
+    from film_stockpot.presets.loader import load_base, resolve_preset_data
+
+    base = load_base()
+    preset = resolve_preset_data({"id": "fujicolor_c200"})
+    assert preset is not None
+
+    rng = np.random.default_rng(7)
+    flat = np.clip(rng.normal(0.45, 0.12, (256, 384, 3)), 0.05, 0.92).astype(np.float32)
+    film = apply_film_preset(flat, preset, base)
+    # Typical real scans do not clip to 1.0 after grading.
+    film = np.clip(film * 0.92 + 0.02, 0.0, 0.88).astype(np.float32)
+
+    settings = {
+        "print": {
+            **PRINT_NEUTRAL,
+            "enabled": True,
+            "paper_profile": "fuji_crystal",
+            "density": 0.37,
+            "grade": 128.0,
+        }
+    }
+    with_flat = apply_print_stage(film, settings, preset, flat_scan=flat)
+    flat_decode = apply_print_stage(film, settings, None, flat_scan=flat)
+
+    film_lum = get_luminance(film)
+    out_lum = get_luminance(with_flat)
+    film_range = float(np.percentile(film_lum, 95) - np.percentile(film_lum, 5))
+    out_range = float(np.percentile(out_lum, 95) - np.percentile(out_lum, 5))
+    assert out_range > 0.25 * film_range
+    assert float((out_lum >= 0.999).mean()) < 0.05
+    assert not np.allclose(with_flat, flat_decode, atol=0.05)
+
+
+def test_print_uses_display_path_when_film_grade_and_flat_scan() -> None:
+    """Print must emulate the graded film image, not re-decode the raw flat scan."""
+    from film_stockpot.image.pipeline import apply_film_preset
+    from film_stockpot.image.print.logic import get_luminance
+    from film_stockpot.presets.loader import load_base, resolve_preset_data
+
+    base = load_base()
+    preset = resolve_preset_data({"id": "kodak_portra_400"})
+    assert preset is not None
+
+    rng = np.random.default_rng(3)
+    flat = np.clip(rng.normal(0.45, 0.12, (128, 192, 3)), 0.05, 0.95).astype(np.float32)
+    film = apply_film_preset(flat, preset, base)
+
+    settings = {
+        "print": {
+            **PRINT_NEUTRAL,
+            "enabled": True,
+            "paper_profile": "kodak_endura",
+        }
+    }
+    with_flat = apply_print_stage(film, settings, preset, flat_scan=flat)
+    flat_decode = apply_print_stage(film, settings, None, flat_scan=flat)
+
+    assert not np.allclose(with_flat, flat_decode, atol=0.05)
+    film_lum = get_luminance(film)
+    out_lum = get_luminance(with_flat)
+    assert float(np.percentile(out_lum, 95) - np.percentile(out_lum, 5)) > 0.2 * (
+        float(np.percentile(film_lum, 95) - np.percentile(film_lum, 5))
+    )
+
+
 def test_print_display_path_handles_graded_input() -> None:
     import json
     from pathlib import Path

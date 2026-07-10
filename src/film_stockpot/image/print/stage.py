@@ -18,7 +18,7 @@ from film_stockpot.image.print.logic import (
 from film_stockpot.image.print.normalization import (
     default_log_bounds,
     display_to_normalized_log,
-    is_display_referred,
+    graded_display_to_normalized_log,
     luminance_density_range,
     measure_anchor_from_normalized,
     measure_neutral_axis,
@@ -126,21 +126,13 @@ def apply_print_stage(
 
     image = np.clip(rgb.astype(np.float32, copy=True), 0.0, 1.0)
     scan_source = flat_scan if flat_scan is not None else image
-    use_display = flat_scan is None and (preset is not None or is_display_referred(image))
-    if use_display:
-        log_image = display_to_normalized_log(image)
-        bounds = default_log_bounds(process_mode=process_mode)
-        metered_anchor = (
-            measure_anchor_from_normalized(log_image) if print_settings["auto_exposure"] else None
-        )
-        textural_range = measure_textural_range_from_normalized(log_image)
-        shadow_refs = None
-        shadow_refs_norm = None
-        neutral_axis_norm = None
-        confidence = None
-    else:
+    # A selected film stock has already expanded the scan to display space — emulate
+    # printing that grade instead of re-decoding the raw flat log encoding.
+    film_graded = preset is not None
+    use_flat_log = flat_scan is not None and not film_graded
+    bounds = default_log_bounds(process_mode=process_mode)
+    if use_flat_log:
         log_image = flat_scan_to_normalized_log(scan_source)
-        bounds = default_log_bounds(process_mode=process_mode)
         working = norm_log_to_transmittance(log_image)
         metered_anchor = measure_anchor_from_normalized(log_image) if print_settings["auto_exposure"] else None
         textural_range = measure_textural_range_from_normalized(log_image)
@@ -149,6 +141,26 @@ def apply_print_stage(
         neutral_axis_refs = measure_neutral_axis(working, bounds)
         neutral_axis_norm = normalized_neutral_axis(bounds, neutral_axis_refs)
         confidence = neutral_axis_refs[3] if neutral_axis_refs is not None else None
+    elif flat_scan is not None:
+        log_image = graded_display_to_normalized_log(image, flat_scan)
+        working = norm_log_to_transmittance(flat_scan_to_normalized_log(flat_scan))
+        metered_anchor = measure_anchor_from_normalized(log_image) if print_settings["auto_exposure"] else None
+        textural_range = measure_textural_range_from_normalized(log_image)
+        shadow_refs = measure_shadow_log_refs(working)
+        shadow_refs_norm = normalized_shadow_refs(bounds, shadow_refs)
+        neutral_axis_refs = measure_neutral_axis(working, bounds)
+        neutral_axis_norm = normalized_neutral_axis(bounds, neutral_axis_refs)
+        confidence = neutral_axis_refs[3] if neutral_axis_refs is not None else None
+    else:
+        log_image = display_to_normalized_log(image)
+        metered_anchor = (
+            measure_anchor_from_normalized(log_image) if print_settings["auto_exposure"] else None
+        )
+        textural_range = measure_textural_range_from_normalized(log_image)
+        shadow_refs = None
+        shadow_refs_norm = None
+        neutral_axis_norm = None
+        confidence = None
 
     anchor = metered_anchor if print_settings["auto_exposure"] else None
     lum_range = luminance_density_range(bounds)
@@ -221,7 +233,7 @@ def apply_print_stage(
         lum = get_luminance(positive)
         positive = np.stack([lum, lum, lum], axis=-1)
 
-    reference = scan_source if flat_scan is not None else image
+    reference = scan_source if use_flat_log else image
     positive = _lift_print_to_reference(positive, reference)
 
     return positive.astype(np.float32, copy=False)
