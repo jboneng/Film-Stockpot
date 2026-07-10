@@ -1,6 +1,6 @@
-"""Darkroom paper profiles — ported from NegPy (GPL-3).
+"""Darkroom paper profiles (GPL-3).
 
-Values were loosely mapped from published datasheets; see NegPy ``papers.py``.
+Values were loosely mapped from published datasheets.
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""Tests for NegPy-style print emulation."""
+"""Tests for darkroom print emulation."""
 
 import numpy as np
 

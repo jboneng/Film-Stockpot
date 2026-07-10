@@ -1,4 +1,4 @@
-"""NegPy-style darkroom print emulation (GPL-3 derived)."""
+"""Darkroom print emulation (GPL-3 derived)."""
 
 from film_stockpot.image.print.papers import (
     PAPER_PROFILES,

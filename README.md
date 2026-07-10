@@ -4,56 +4,46 @@
 
 # Film Stockpot
 
-Film-stock looks and Fuji Frontier–style grading for [NegPy](https://github.com/marcinz606/NegPy) flat 16-bit TIFF exports.
+Film-stock looks and Fuji Frontier–style grading for flat 16-bit TIFF scans.
 
 Film Stockpot is a PyQt6 desktop app for exploring **film-stock character** and
-**lab-scanner-style operator controls** on exports from
-[NegPy](https://github.com/marcinz606/NegPy). NegPy handles negative processing,
-scanning, and export; Film Stockpot is an optional companion for grading those
-**flat / log 16-bit TIFFs** — applying stock presets, expanding them to full
-range for preview, and fine-tuning with Frontier-style density, color, and tone
-controls. Edits are non-destructive, saved per image, and can be batch-applied
-across a whole roll.
+**lab-scanner-style operator controls** on **flat / log 16-bit TIFFs** — applying
+stock presets, expanding them to full range for preview, and fine-tuning with
+Frontier-style density, color, and tone controls. Edits are non-destructive, saved
+per image, and can be batch-applied across a whole roll.
 
-> **Input format:** Film Stockpot expects **flat 16-bit TIFF exports from NegPy**
-> — inverted and color-corrected, but intentionally low-contrast ("flat" / "log")
-> so the grading pipeline has room to work. It is not aimed at already-finished
-> JPEGs or high-contrast positives. See [NegPy → Film Stockpot handoff](#negpy--film-stockpot-handoff) below.
+> **Input format:** Film Stockpot expects **flat 16-bit TIFF scans** — inverted
+> and color-corrected, but intentionally low-contrast ("flat" / "log") so the
+> grading pipeline has room to work. It is not aimed at already-finished JPEGs or
+> high-contrast positives. See [Typical workflow](#typical-workflow) below.
 
 ---
 
-## For NegPy users
+## Input workflow
 
-If you already process negatives in [NegPy](https://github.com/marcinz606/NegPy),
-Film Stockpot is built around the same export workflow: finish your NegPy edit,
-export a **flat 16-bit TIFF**, then explore film-stock presets and Frontier-style
-controls as a separate, non-destructive pass. It is designed to sit **alongside**
-NegPy.
+Film Stockpot is built for a **flat 16-bit TIFF** workflow: export or collect
+low-contrast scans into a folder, then explore film-stock presets and
+Frontier-style controls as a separate, non-destructive grading pass.
 
-| Stage | Tool | Role |
-|-------|------|------|
-| Scan & negative processing | **[NegPy](https://github.com/marcinz606/NegPy)** | Inversion, normalization, editing, export |
-| Film-stock & scanner-style grading | **Film Stockpot** | Optional grading on the flat TIFF export |
-
-Film Stockpot grew out of experiments shared with the NegPy community in
-[Show and tell #287](https://github.com/marcinz606/NegPy/discussions/287). NegPy's
-flat export made it possible to explore film-stock and scanner-style profiles
-without changing the underlying negative work.
+| Stage | Role |
+|-------|------|
+| Scan & negative processing | Inversion, normalization, editing, export (your existing tools) |
+| Film-stock & scanner-style grading | **Film Stockpot** — optional grading on the flat TIFF |
 
 **Film Stockpot may interest you if:**
 
-- You export **flat 16-bit TIFFs from NegPy** and want to try different film-stock looks
+- You work with **flat 16-bit TIFF scans** and want to try different film-stock looks
 - You enjoy **Frontier-style** density, CMY balance, and tone controls as a grading pass
 - You want **JSON presets** you can edit, share, and version-control
 
 **Film Stockpot focuses on grading** — scanning, inversion, and orange-mask handling
-remain NegPy's domain.
+stay in your upstream workflow.
 
 ---
 
 ## Table of contents
 
-- [For NegPy users](#for-negpy-users)
+- [Input workflow](#input-workflow)
 - [Features](#features)
 - [How it works](#how-it-works)
 - [Requirements](#requirements)
@@ -77,8 +67,8 @@ remain NegPy's domain.
 
 ## Features
 
-- **NegPy flat TIFF workflow** — built for **flat / log 16-bit TIFF exports from
-  [NegPy](https://github.com/marcinz606/NegPy)**; your export file is never modified.
+- **Flat TIFF workflow** — built for **flat / log 16-bit TIFF scans**; your source
+  file is never modified.
 - **Flat-scan aware pipeline** — expands the flat export to full range for grading,
   then applies film-stock character and operator controls on top.
 - **Film-stock emulation** — a library of color and black & white stocks (Kodak
@@ -100,7 +90,7 @@ remain NegPy's domain.
   for edited and excluded frames.
 - **Recent folders** — reopen the last ten export folders from the **Open** menu.
 - **Non-destructive editing** — every adjustment is saved to a per-image JSON
-  sidecar (similar in spirit to NegPy keeping edits as recipes); your TIFF is
+  sidecar (recipe-style edits stored beside the image); your TIFF is
   never modified.
 - **Single and batch export** — export the current frame, or render the entire
   roll to 16-bit TIFF, honoring each image's own saved settings.
@@ -117,7 +107,7 @@ remain NegPy's domain.
 
 ## How it works
 
-When you open a NegPy flat export, Film Stockpot grades from that pristine TIFF
+When you open a flat scan, Film Stockpot grades from that pristine TIFF
 every time — switching presets never stacks edits.
 
 The processing pipeline is intentionally stateless:
@@ -175,21 +165,18 @@ uv run python -m film_stockpot
 See [RUNNING.md](RUNNING.md) for activating the virtual environment directly and
 other command-line details.
 
-### NegPy → Film Stockpot handoff
+### Typical workflow
 
-1. Finish your edit in **NegPy** (exposure, mask handling, retouching, and so on).
-2. Export as a **flat 16-bit TIFF** into a folder (the same low-contrast export
-   format NegPy uses when you want a neutral starting point for further work).
-3. In Film Stockpot, click **Open Folder** and select that export folder.
-4. Choose a **Film Stock**, adjust **Frontier Controls**, then export graded
+1. Finish scanning and export a **flat 16-bit TIFF** into a folder (a low-contrast
+   scan that leaves headroom for further grading).
+2. In Film Stockpot, click **Open Folder** and select that folder.
+3. Choose a **Film Stock**, adjust **Frontier Controls**, then export graded
    16-bit TIFFs from the **Export** tab.
 
-Your NegPy export files stay untouched. Film Stockpot stores its own adjustments in
+Your source TIFF files stay untouched. Film Stockpot stores its own adjustments in
 per-image `.stockpot.json` sidecars next to each TIFF.
 
-### Typical workflow (NegPy export → grade → export)
-
-After the [handoff](#negpy--film-stockpot-handoff) above:
+### Grading a roll
 
 1. Pick a frame from the film strip on the left.
 2. Choose a **Film Stock** from the dropdown.
@@ -208,7 +195,7 @@ different stages:
 
 | Stage | What you see |
 |-------|----------------|
-| **Flat** | The raw NegPy flat export |
+| **Flat** | The raw flat scan |
 | **Base graded** | After the shared Frontier base input transform (de-log, neutralize, etc.) |
 | **Film stock** | Base graded + film-stock look (no operator sliders) |
 | **Film + adjustments** | Full grade including your Frontier Controls |
@@ -262,7 +249,7 @@ Launch the GUI with no arguments (same from `uv run`, the installed app, or
 film-stockpot presets list
 
 # Folder: per-image sidecars when present, Portra 400 for the rest
-film-stockpot export .\negpy-flat\ -o .\graded\ --stock kodak_portra_400
+film-stockpot export .\flat-scans\ -o .\graded\ --stock kodak_portra_400
 
 # Single file
 film-stockpot export frame.tiff -o frame_graded.tif --stock kodak_gold_200
@@ -294,11 +281,11 @@ For pipelines that call Film Stockpot before the next step, use **`--json`** so
 `--quiet` suppresses it).
 
 ```powershell
-film-stockpot export .\negpy-flat\ -o .\graded\ --stock kodak_portra_400 --json --quiet
+film-stockpot export .\flat-scans\ -o .\graded\ --stock kodak_portra_400 --json --quiet
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # Example: pass exported paths to the next tool
-$report = film-stockpot export .\negpy-flat\ -o .\graded\ --stock kodak_portra_400 --json --quiet | ConvertFrom-Json
+$report = film-stockpot export .\flat-scans\ -o .\graded\ --stock kodak_portra_400 --json --quiet | ConvertFrom-Json
 foreach ($path in $report.outputs) { Write-Host "Next step input: $path" }
 ```
 
@@ -500,7 +487,7 @@ file with a JSON validator if that happens.
 ## Tuning the Frontier base profile
 
 [`_frontier_base.json`](FilmPresets/_frontier_base.json) is the shared layer applied
-**beneath every film stock**. Its job is to take NegPy's flat/log 16-bit TIFF and
+**beneath every film stock**. Its job is to take a flat/log 16-bit TIFF and
 expand it back to a normal-looking, full-range image *before* any film look is
 applied. Get this right once and every preset benefits; get it wrong and every
 preset will look washed out or crushed.
@@ -529,7 +516,7 @@ Stages run top to bottom:
 | Field | Type | What it does | Tuning guidance |
 |-------|------|--------------|-----------------|
 | `auto_levels` | bool | Stretches the real black/white points back to full range. | Leave `true` for flat scans; set `false` only if your scans are already full-range. |
-| `per_channel` | bool | When `true`, auto-levels each RGB channel independently (removes color casts but can shift white balance). When `false`, uses a shared luma range (preserves color). | Keep `false` for NegPy exports unless you specifically want aggressive per-channel neutralization. |
+| `per_channel` | bool | When `true`, auto-levels each RGB channel independently (removes color casts but can shift white balance). When `false`, uses a shared luma range (preserves color). | Keep `false` for flat scans unless you specifically want aggressive per-channel neutralization. |
 | `black_clip_pct` | number (%) | Percentile of darkest pixels clipped to black. | Higher = deeper, contrastier blacks. Lower = lifted/brighter shadows. Typical `0.05`–`0.5`. |
 | `white_clip_pct` | number (%) | Percentile of brightest pixels clipped to white. | Higher = brighter highlights (more pixels pushed to white). Typical `0.05`–`0.5`. |
 | `neutralize` | bool | Aligns the per-channel medians toward a common grey, stripping residual scan cast so every stock starts from a consistent neutral anchor. | Leave `true` for consistent color across a roll; set `false` to preserve the scan's own cast. |

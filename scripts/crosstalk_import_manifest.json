@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "description": "Dev-only map for scripts/import_negpy_crosstalk.py. Runtime reads matrices from each FilmPresets/*.json file.",
-  "default_negpy_crosstalk_dir": "C:/Users/jbone/Desktop/Negpy/NegPy/crosstalk",
+  "description": "Dev-only map for scripts/import_crosstalk_matrices.py. Runtime reads matrices from each FilmPresets/*.json file.",
+  "default_crosstalk_dir": "C:/Github/crosstalk",
   "entries": {
     "kodak_portra_160": "kodak_portra_160.toml",
     "kodak_portra_400": "portra_400.toml",

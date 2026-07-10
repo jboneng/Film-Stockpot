@@ -1,4 +1,4 @@
-"""Print-stage constants ported from NegPy (GPL-3)."""
+"""Print-stage constants (GPL-3)."""
 
 from __future__ import annotations
 

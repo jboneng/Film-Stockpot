@@ -24,7 +24,7 @@ from film_stockpot.image.print.normalization import (
     measure_neutral_axis,
     measure_shadow_log_refs,
     measure_textural_range_from_normalized,
-    negpy_flat_to_normalized_log,
+    flat_scan_to_normalized_log,
     norm_log_to_transmittance,
     normalized_neutral_axis,
     normalized_shadow_refs,
@@ -115,7 +115,7 @@ def apply_print_stage(
     *,
     flat_scan: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Apply NegPy-style darkroom print emulation when enabled."""
+    """Apply darkroom print emulation when enabled."""
     print_settings = print_settings_from_adjustments(settings, preset)
     if not print_settings["enabled"]:
         return rgb
@@ -139,7 +139,7 @@ def apply_print_stage(
         neutral_axis_norm = None
         confidence = None
     else:
-        log_image = negpy_flat_to_normalized_log(scan_source)
+        log_image = flat_scan_to_normalized_log(scan_source)
         bounds = default_log_bounds(process_mode=process_mode)
         working = norm_log_to_transmittance(log_image)
         metered_anchor = measure_anchor_from_normalized(log_image) if print_settings["auto_exposure"] else None

@@ -1,4 +1,4 @@
-"""H&D print curve logic — ported from NegPy (GPL-3)."""
+"""H&D print curve logic (GPL-3)."""
 
 from __future__ import annotations
 

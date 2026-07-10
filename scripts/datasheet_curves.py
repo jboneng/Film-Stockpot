@@ -876,7 +876,7 @@ def extract_page_curves(
     return curves_out
 
 
-def derive_negpy_leakage_from_dye_density(curve: dict) -> dict[str, Any] | None:
+def derive_leakage_from_dye_density(curve: dict) -> dict[str, Any] | None:
     """Build a 3x3 dye leakage matrix from spectral_dye_density series (sampled at 550/550/550 nm bands)."""
     if curve.get("type") != "spectral_dye_density":
         return None
@@ -887,7 +887,7 @@ def derive_negpy_leakage_from_dye_density(curve: dict) -> dict[str, Any] | None:
         return None
 
     # Map series names to rows; sample density at representative wavelengths per dye column heuristic.
-    # Standard NegPy input: rows = R/G/B measurement bands, cols = C/M/Y dyes.
+    # Rows = R/G/B measurement bands, cols = C/M/Y dyes.
     def sample(series_points: list[list[float]], wavelength: float) -> float:
         arr = np.array(series_points, dtype=np.float64)
         if len(arr) < 2:
@@ -913,5 +913,5 @@ def derive_negpy_leakage_from_dye_density(curve: dict) -> dict[str, Any] | None:
     ]
     return {
         "leakage_matrix": matrix,
-        "note": "Heuristic sampling from dye-density curves; verify before NegPy TOML export.",
+        "note": "Heuristic sampling from dye-density curves; verify before preset export.",
     }

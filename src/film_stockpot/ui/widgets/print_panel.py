@@ -1,4 +1,4 @@
-"""Darkroom print controls ported from NegPy exposure settings."""
+"""Darkroom print controls for exposure and paper emulation."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from film_stockpot.ui.widgets.collapsible_section import CollapsibleSection
 
 
 class PrintPanel(QWidget):
-    """NegPy-style print emulation controls."""
+    """Darkroom print emulation controls."""
 
     changed = pyqtSignal()
     interaction_changed = pyqtSignal(bool)

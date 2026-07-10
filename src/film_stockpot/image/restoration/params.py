@@ -25,7 +25,7 @@ class DefectParams:
     hair_sensitivity: float = 0.5
     scratch_sensitivity: float = 0.5
 
-    min_size: int = 3
+    min_size: int = 4
     dilation: int = 1
 
     inpaint_method: str = INPAINT_TELEA

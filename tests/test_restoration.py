@@ -27,6 +27,25 @@ def _scan_with_defects(seed: int = 0) -> np.ndarray:
     return np.clip(scan, 0.0, 1.0)
 
 
+def _structured_scene_with_defects(seed: int = 0) -> np.ndarray:
+    """Flat scan plus step edges, repetitive texture, and real defects."""
+    rng = np.random.default_rng(seed)
+    scan = np.full((400, 400, 3), 0.55, dtype=np.float32)
+    scan += rng.normal(0.0, 0.01, scan.shape).astype(np.float32)
+    scan[:, 200:] = 0.30  # vertical region boundary (window/building edge)
+    scan[150:158, :] = 0.20  # horizontal mullion / sill
+    for column in range(40, 180, 6):
+        scan[250:390, column : column + 2] = 0.75  # corrugated siding stripes
+    scan[60:63, 60:63] = 0.98  # bright dust on flat area
+    scan[100:103, 90:93] = 0.05  # dark dust on flat area
+    scan[300, 210:250] = 0.10  # scratch on flat dark region
+    return np.clip(scan, 0.0, 1.0)
+
+
+def _region_sum(mask: np.ndarray, row0: int, row1: int, col0: int, col1: int) -> int:
+    return int(mask[row0:row1, col0:col1].sum())
+
+
 def test_detects_dust_specks() -> None:
     scan = _scan_with_defects()
     mask = generate_defect_mask(scan, DefectParams(detect_hair=False, detect_scratch=False))
@@ -49,6 +68,23 @@ def test_clean_gradient_yields_near_empty_mask() -> None:
     scan = np.clip(scan, 0.0, 1.0)
     mask = generate_defect_mask(scan)
     assert mask_coverage(mask) < 0.01
+
+
+def test_rejects_structural_edges_and_texture() -> None:
+    scan = _structured_scene_with_defects()
+    mask = generate_defect_mask(scan)
+    assert mask_coverage(mask) < 0.02
+    assert _region_sum(mask, 0, 400, 198, 203) < 20  # vertical step edge
+    assert _region_sum(mask, 146, 162, 0, 400) < 40  # horizontal mullion
+    assert _region_sum(mask, 250, 390, 40, 182) < 80  # siding stripes
+
+
+def test_structured_scene_still_finds_real_defects() -> None:
+    scan = _structured_scene_with_defects()
+    mask = generate_defect_mask(scan)
+    assert _region_sum(mask, 58, 66, 58, 66) > 0
+    assert _region_sum(mask, 98, 106, 88, 96) > 0
+    assert _region_sum(mask, 296, 304, 208, 252) > 20
 
 
 def test_remove_defects_only_changes_masked_pixels() -> None:

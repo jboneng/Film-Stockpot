@@ -217,7 +217,7 @@ def _cmd_presets_list(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="film-stockpot",
-        description="Film Stockpot — film-stock grading for NegPy flat TIFF exports.",
+        description="Film Stockpot — film-stock grading for flat 16-bit TIFF scans.",
     )
     parser.add_argument("--version", action="version", version=f"Film Stockpot {__version__}")
     subparsers = parser.add_subparsers(dest="command")

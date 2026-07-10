@@ -392,7 +392,7 @@ def extract_pdf(
         "curves": all_curves,
         "notes": [
             "Graph/curve data are digitized into curves[] when vector paths or page renders allow it.",
-            "Verify curve arrays against the PDF before preset or NegPy export use.",
+            "Verify curve arrays against the PDF before preset export use.",
             "scalars are regex-parsed from text; verify against PDF before preset use.",
         ],
     }

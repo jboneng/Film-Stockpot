@@ -1,7 +1,7 @@
-"""Spectral crosstalk correction (NegPy-compatible density unmixing).
+"""Spectral crosstalk correction (density-space dye unmixing).
 
 Matrices are stored in each film preset JSON under ``pipeline.crosstalk.matrix``.
-Film Stockpot does not read NegPy TOML files at runtime.
+External TOML calibration files are not read at runtime.
 
 The UI slider runs 0.00..1.00 where 0 is off, 0.5 is the default, and 1 applies
 the full calibrated matrix.
@@ -86,7 +86,7 @@ def apply_spectral_crosstalk(
     matrix: list[list[float]] | None,
     strength: float,
 ) -> np.ndarray:
-    """Unmix dye-layer crosstalk in density space (matches NegPy Lab logic).
+    """Unmix dye-layer crosstalk in density space.
 
     ``strength`` is 0..1 where 0 is identity and 1 applies the full calibrated
     matrix (after row normalization). Results are anchored and gamut-mapped to

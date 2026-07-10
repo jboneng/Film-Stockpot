@@ -1,4 +1,4 @@
-"""Log-density analysis helpers for the print stage — ported from NegPy (GPL-3)."""
+"""Log-density analysis helpers for the print stage (GPL-3)."""
 
 from __future__ import annotations
 
@@ -241,8 +241,8 @@ def is_display_referred(rgb: np.ndarray) -> bool:
     return float(img.min()) < 0.015 and float(img.max()) > 0.985
 
 
-def negpy_flat_to_normalized_log(flat: np.ndarray) -> np.ndarray:
-    """Decode a NegPy flat/log TIFF export back to normalized negative log."""
+def flat_scan_to_normalized_log(flat: np.ndarray) -> np.ndarray:
+    """Decode a flat/log TIFF scan back to normalized negative log."""
     gain = float(EXPOSURE_CONSTANTS["flat_log_gain"])
     lift = float(EXPOSURE_CONSTANTS["flat_log_lift"])
     img = np.clip(np.asarray(flat, dtype=np.float32), 0.0, 1.0)
@@ -256,8 +256,8 @@ def norm_log_to_transmittance(norm_log: np.ndarray) -> np.ndarray:
 
 
 def bridge_scan_to_print_linear(rgb: np.ndarray) -> np.ndarray:
-    """Legacy remap kept for non-NegPy flat sources without flat-master encoding."""
-    return norm_log_to_transmittance(negpy_flat_to_normalized_log(rgb))
+    """Legacy remap for flat sources without flat-master encoding."""
+    return norm_log_to_transmittance(flat_scan_to_normalized_log(rgb))
 
 
 def display_to_normalized_log(rgb: np.ndarray) -> np.ndarray:

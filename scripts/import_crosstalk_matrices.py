@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""One-shot dev tool: copy NegPy crosstalk matrices into FilmPresets JSON.
+"""One-shot dev tool: copy crosstalk matrices from TOML into FilmPresets JSON.
 
 The application reads ``pipeline.crosstalk.matrix`` from each preset JSON at
-runtime. NegPy TOML files are never loaded by Film Stockpot itself.
+runtime. External TOML files are never loaded by Film Stockpot itself.
 
 Usage:
-  uv run python scripts/import_negpy_crosstalk.py
-  uv run python scripts/import_negpy_crosstalk.py --crosstalk-dir "C:/Users/.../NegPy/crosstalk"
+  uv run python scripts/import_crosstalk_matrices.py
+  uv run python scripts/import_crosstalk_matrices.py --crosstalk-dir "C:/path/to/crosstalk"
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PRESETS_DIR = ROOT / "FilmPresets"
-MANIFEST_PATH = Path(__file__).resolve().with_name("negpy_crosstalk_manifest.json")
+MANIFEST_PATH = Path(__file__).resolve().with_name("crosstalk_import_manifest.json")
 
 
 def _parse_toml_matrix(path: Path) -> list[list[float]] | None:
@@ -70,20 +70,20 @@ def import_matrices(crosstalk_dir: Path) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Copy NegPy crosstalk matrices into FilmPresets JSON (dev import only).",
+        description="Copy crosstalk matrices from TOML into FilmPresets JSON (dev import only).",
     )
     parser.add_argument(
         "--crosstalk-dir",
         type=Path,
         default=None,
-        help="NegPy crosstalk folder (default: manifest default_negpy_crosstalk_dir)",
+        help="Folder of crosstalk TOML files (default: manifest default_crosstalk_dir)",
     )
     args = parser.parse_args(argv)
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     crosstalk_dir = args.crosstalk_dir
     if crosstalk_dir is None:
-        crosstalk_dir = Path(manifest.get("default_negpy_crosstalk_dir", ""))
+        crosstalk_dir = Path(manifest.get("default_crosstalk_dir", ""))
     crosstalk_dir = crosstalk_dir.expanduser().resolve()
 
     if not crosstalk_dir.is_dir():
