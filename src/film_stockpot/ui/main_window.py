@@ -321,6 +321,7 @@ class MainWindow(QMainWindow):
         self._grading_panel = GradingPanel(self)
         self._grading_panel.changed.connect(self._schedule_live_update)
         self._grading_panel.interaction_changed.connect(self._on_preview_interaction)
+        self._grading_panel.scanner_overrides.connect(self._on_style_scanner_overrides)
 
         grading_scroll = QScrollArea(self)
         grading_scroll.setWidgetResizable(True)
@@ -416,6 +417,16 @@ class MainWindow(QMainWindow):
     def _on_print_enabled_changed(self, enabled: bool) -> None:
         self._panel.set_print_controls_active(enabled)
         self._preview_engine.invalidate_adjustment_cache()
+        if not self._restoring:
+            self._schedule_live_update(immediate=True)
+
+    def _on_style_scanner_overrides(self, overrides: dict) -> None:
+        """Apply saturation/sharpness pushed from a camera style selection."""
+        if not overrides:
+            return
+        current = self._panel.settings()
+        current.update(overrides)
+        self._panel.set_settings(current)
         if not self._restoring:
             self._schedule_live_update(immediate=True)
 

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import numpy as np
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -12,7 +15,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from film_stockpot.image.grading import GRADING_NEUTRAL, normalize_grading
+from film_stockpot.image.grading import (
+    GRADING_NEUTRAL,
+    camera_style_scanner_overrides,
+    camera_style_to_grading,
+    normalize_grading,
+)
+from film_stockpot.styles.loader import CameraStyle, load_camera_styles
 from film_stockpot.ui.widgets.color_wheel import ColorWheelWidget
 from film_stockpot.ui.widgets.curve_editor import CurveEditorWidget
 
@@ -80,14 +89,29 @@ class GradingPanel(QWidget):
 
     changed = pyqtSignal()
     interaction_changed = pyqtSignal(bool)
+    scanner_overrides = pyqtSignal(dict)
+
+    _STYLE_ROLE = Qt.ItemDataRole.UserRole
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._interaction_depth = 0
+        self._style_id: str | None = None
+        self._monochrome = False
+        self._applying_style = False
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(12)
+
+        style_row = QHBoxLayout()
+        style_row.addWidget(QLabel("Style", self))
+        self._style_combo = QComboBox(self)
+        self._style_combo.setMaxVisibleItems(20)
+        self._populate_styles()
+        self._style_combo.currentIndexChanged.connect(self._on_style_changed)
+        style_row.addWidget(self._style_combo, 1)
+        layout.addLayout(style_row)
 
         self._midtones = _ZoneControl("Midtones", 128, self)
         self._midtones.changed.connect(self.changed.emit)
@@ -122,6 +146,49 @@ class GradingPanel(QWidget):
         self._reset_button.clicked.connect(self.reset)
         layout.addWidget(self._reset_button)
         layout.addStretch(1)
+
+    def _populate_styles(self) -> None:
+        model = QStandardItemModel(self._style_combo)
+        none_item = QStandardItem("None")
+        none_item.setData(None, self._STYLE_ROLE)
+        model.appendRow(none_item)
+
+        try:
+            styles = load_camera_styles()
+        except FileNotFoundError:
+            styles = []
+
+        name_counts: dict[str, int] = {}
+        for style in styles:
+            name_counts[style.name] = name_counts.get(style.name, 0) + 1
+
+        for style in styles:
+            text = style.name
+            if name_counts.get(style.name, 0) > 1 and style.slot:
+                text = f"{style.name} ({style.slot})"
+            item = QStandardItem(text)
+            item.setData(style, self._STYLE_ROLE)
+            model.appendRow(item)
+
+        self._style_combo.setModel(model)
+
+    def _on_style_changed(self, index: int) -> None:
+        if self._applying_style:
+            return
+        style = self._style_combo.itemData(index, self._STYLE_ROLE)
+        if style is None:
+            grading = normalize_grading(GRADING_NEUTRAL)
+            self.set_settings(grading)
+            self.changed.emit()
+            return
+
+        assert isinstance(style, CameraStyle)
+        grading = camera_style_to_grading(style)
+        self.set_settings(grading)
+        overrides = camera_style_scanner_overrides(style)
+        if overrides:
+            self.scanner_overrides.emit(overrides)
+        self.changed.emit()
 
     def _make_global_slider(self, key: str, label: str, low: int, high: int, default: int) -> QVBoxLayout:
         row = QVBoxLayout()
@@ -165,6 +232,21 @@ class GradingPanel(QWidget):
         if self._interaction_depth == 0:
             self.interaction_changed.emit(False)
 
+    def _select_style_id(self, style_id: str | None) -> None:
+        self._applying_style = True
+        try:
+            if not style_id:
+                self._style_combo.setCurrentIndex(0)
+                return
+            for row in range(self._style_combo.count()):
+                style = self._style_combo.itemData(row, self._STYLE_ROLE)
+                if isinstance(style, CameraStyle) and style.id == style_id:
+                    self._style_combo.setCurrentIndex(row)
+                    return
+            self._style_combo.setCurrentIndex(0)
+        finally:
+            self._applying_style = False
+
     def settings(self) -> dict:
         return {
             "grading": {
@@ -174,11 +256,17 @@ class GradingPanel(QWidget):
                 "blending": self._blending_slider.value(),
                 "balance": self._balance_slider.value(),
                 "curves": self._curve_editor.curves(),
+                "monochrome": self._monochrome,
+                "style_id": self._style_id,
             }
         }
 
     def set_settings(self, grading: dict | None) -> None:
         values = normalize_grading(grading)
+        self._style_id = values.get("style_id")
+        self._monochrome = bool(values.get("monochrome"))
+        self._select_style_id(self._style_id)
+
         self._shadows.set_zone_values(values["shadows"])
         self._midtones.set_zone_values(values["midtones"])
         self._highlights.set_zone_values(values["highlights"])

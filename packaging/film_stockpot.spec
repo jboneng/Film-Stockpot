@@ -16,6 +16,7 @@ img_datas, img_binaries, img_hiddenimports = collect_all("imagecodecs")
 
 datas = [
     (str(root / "FilmPresets"), "FilmPresets"),
+    (str(root / "CameraStyles"), "CameraStyles"),
     (str(src / "film_stockpot" / "assets"), "film_stockpot/assets"),
 ]
 datas += img_datas

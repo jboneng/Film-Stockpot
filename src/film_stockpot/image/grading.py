@@ -33,6 +33,8 @@ GRADING_NEUTRAL: dict[str, Any] = {
     "blending": 50,
     "balance": 0,
     "curves": CURVES_NEUTRAL,
+    "monochrome": False,
+    "style_id": None,
 }
 
 
@@ -50,12 +52,19 @@ def normalize_grading(grading: dict | None) -> dict:
     result["blending"] = int(source.get("blending", GRADING_NEUTRAL["blending"]))
     result["balance"] = int(source.get("balance", GRADING_NEUTRAL["balance"]))
     result["curves"] = normalize_curves(source.get("curves"))
+    result["monochrome"] = bool(source.get("monochrome", False))
+    style_id = source.get("style_id")
+    result["style_id"] = str(style_id) if style_id else None
     return result
 
 
 def grading_is_neutral(grading: dict | None) -> bool:
     """Return True when grading settings match the neutral defaults."""
-    return normalize_grading(grading) == normalize_grading(GRADING_NEUTRAL)
+    current = normalize_grading(grading)
+    neutral = normalize_grading(GRADING_NEUTRAL)
+    current.pop("style_id", None)
+    neutral.pop("style_id", None)
+    return current == neutral
 
 
 def grading_mask_key(grading: dict) -> str:
@@ -82,9 +91,52 @@ def has_wheel_adjustments(grading: dict | None) -> bool:
 
 
 def has_grading_adjustments(grading: dict | None) -> bool:
-    """True when grading has any visible effect (wheels, luminance, or curves)."""
+    """True when grading has any visible effect (wheels, luminance, curves, or mono)."""
     normalized = normalize_grading(grading)
-    return _zones_have_adjustments(normalized) or has_curve_adjustments(normalized.get("curves"))
+    return (
+        bool(normalized.get("monochrome"))
+        or _zones_have_adjustments(normalized)
+        or has_curve_adjustments(normalized.get("curves"))
+    )
+
+
+def _style_is_monochrome(base_style: str | None, settings: dict[str, Any] | None) -> bool:
+    if str(base_style or "").lower() == "monochrome":
+        return True
+    values = settings or {}
+    return values.get("saturation") is None and values.get("hue") is None
+
+
+def camera_style_to_grading(style: Any) -> dict:
+    """Map a camera style onto interactive grading settings (L curve + mono flag)."""
+    curve_points = getattr(style, "curve_points", None) or []
+    points_01 = [[float(x) / 255.0, float(y) / 255.0] for x, y in curve_points]
+    grading = normalize_grading(GRADING_NEUTRAL)
+    grading["curves"] = normalize_curves({"L": points_01})
+    grading["monochrome"] = _style_is_monochrome(
+        getattr(style, "base_style", None),
+        getattr(style, "settings", None),
+    )
+    grading["style_id"] = getattr(style, "id", None)
+    return grading
+
+
+def camera_style_scanner_overrides(style: Any) -> dict[str, int]:
+    """Return scanner saturation/sharpness overrides for a camera style."""
+    settings = getattr(style, "settings", None) or {}
+    overrides: dict[str, int] = {}
+    saturation = settings.get("saturation")
+    if saturation is not None:
+        overrides["saturation"] = int(np.clip(int(saturation), -8, 8))
+    sharpening = settings.get("sharpening")
+    if sharpening is not None:
+        overrides["sharpness"] = int(np.clip(int(sharpening), 0, 10))
+    return overrides
+
+
+def _to_monochrome_luma(image: np.ndarray) -> np.ndarray:
+    luma = image @ _LUMA_WEIGHTS
+    return np.repeat(luma[:, :, np.newaxis], 3, axis=2)
 
 
 @dataclass
@@ -287,19 +339,27 @@ def apply_grading_after_scanner(
         return rgb
 
     image = apply_curves(rgb, grading.get("curves"))
-    if not _zones_have_adjustments(grading):
-        return image
+    if _zones_have_adjustments(grading):
+        if gpu_backend is not None and getattr(gpu_backend, "enabled", False):
+            gpu_result = gpu_backend.apply_grading(image, grading, grading_context=grading_context)
+            if gpu_result is not None:
+                image = gpu_result
+            else:
+                image = apply_wheel_grading(
+                    image,
+                    {"grading": grading},
+                    grading_context=grading_context,
+                )
+        else:
+            image = apply_wheel_grading(
+                image,
+                {"grading": grading},
+                grading_context=grading_context,
+            )
 
-    if gpu_backend is not None and getattr(gpu_backend, "enabled", False):
-        gpu_result = gpu_backend.apply_grading(image, grading, grading_context=grading_context)
-        if gpu_result is not None:
-            return gpu_result
-
-    return apply_wheel_grading(
-        image,
-        {"grading": grading},
-        grading_context=grading_context,
-    )
+    if grading.get("monochrome"):
+        image = _to_monochrome_luma(image)
+    return image
 
 
 def apply_interactive_adjustments(
